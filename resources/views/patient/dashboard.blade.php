@@ -26,19 +26,91 @@
     </div>
 
     <!-- QUICK ACCESS -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <a href="{{ route('patient.labResults.index') }}" 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ route('patient.labResults.index') }}"
            class="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-lg shadow text-center">
             <h2 class="text-lg font-bold">📊 Lab Results</h2>
             <p class="text-sm mt-2">View your recent lab results and history</p>
         </a>
 
-        <a href="{{ route('patient.prescriptions.index') }}" 
+        <a href="{{ route('patient.prescriptions.index') }}"
            class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-lg shadow text-center">
             <h2 class="text-lg font-bold">💊 Prescriptions</h2>
             <p class="text-sm mt-2">View and download your prescriptions</p>
         </a>
+
+        {{-- ── Follow-Up Module ── --}}
+        <a href="{{ route('patient.followup.create') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg shadow text-center">
+            <h2 class="text-lg font-bold">📋 Follow-Up Report</h2>
+            <p class="text-sm mt-2">Submit a post-consultation follow-up report</p>
+        </a>
     </div>
+
+    {{-- ── Recent Follow-Up Submissions ── --}}
+    @php
+        $recentSubmissions = auth()->user()->followUpSubmissions()->latest()->take(3)->get();
+    @endphp
+
+    @if($recentSubmissions->isNotEmpty())
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Recent Follow-Up Reports</h2>
+            <a href="{{ route('patient.followup.index') }}"
+               class="text-blue-600 hover:underline text-sm">View All</a>
+        </div>
+        <div class="space-y-3">
+            @foreach($recentSubmissions as $submission)
+            @php
+                $colors = [
+                    'High'   => 'bg-red-100 text-red-700',
+                    'Medium' => 'bg-yellow-100 text-yellow-700',
+                    'Low'    => 'bg-green-100 text-green-700',
+                ];
+                $color = $colors[$submission->urgency_level] ?? 'bg-gray-100 text-gray-600';
+            @endphp
+            <div class="flex justify-between items-center border border-gray-100 rounded-lg p-3">
+                <div>
+                    <p class="text-sm text-gray-700 font-medium">
+                        {{ implode(', ', array_map(fn($s) => ucwords(str_replace('_', ' ', $s)), $submission->symptom_categories)) }}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $submission->created_at->format('d M Y, h:i A') }}</p>
+                    @if($submission->doctor_response)
+                        <p class="text-xs text-blue-600 mt-1">✓ Doctor responded</p>
+                    @endif
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $color }}">
+                        {{ $submission->urgency_level ?? 'Pending' }}
+                    </span>
+                    @if($submission->reviewed_at)
+                        <span class="text-xs text-green-600">Reviewed</span>
+                    @else
+                        <span class="text-xs text-yellow-600">Pending Review</span>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+        <div class="mt-4">
+            <a href="{{ route('patient.followup.create') }}"
+               class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+                + Submit New Follow-Up Report
+            </a>
+        </div>
+    </div>
+    @else
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xl font-semibold">Follow-Up Reports</h2>
+        </div>
+        <p class="text-gray-500 text-sm mb-4">No follow-up reports submitted yet.</p>
+        <a href="{{ route('patient.followup.create') }}"
+           class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+            + Submit Your First Report
+        </a>
+    </div>
+    @endif
 
     <!-- SEARCH / FILTER -->
     <div class="bg-white shadow rounded-lg p-6">
@@ -81,7 +153,6 @@
                                     <div class="text-sm font-medium">🎟️ Ticket #{{ $q->ticket_number }} — {{ $q->patient->name ?? 'Patient' }}</div>
                                     <div class="text-xs text-gray-500">Status: {{ ucfirst($q->status) }}</div>
                                 </div>
-
                                 @if($q->patient_id === auth()->id())
                                     <div class="text-right">
                                         <div class="text-sm text-indigo-600 font-medium">Your ticket</div>
@@ -120,7 +191,6 @@
                             </div>
                         </div>
 
-                        <!-- BOOK FORM -->
                         <form action="{{ route('patient.appointments.store') }}" method="POST" class="mt-4 flex flex-col gap-2">
                             @csrf
                             <input type="hidden" name="doctor_id" value="{{ $doc->id }}">
@@ -163,14 +233,11 @@
                             <td class="px-3 py-2 capitalize">{{ $appt->status }}</td>
                             <td class="px-3 py-2 text-gray-600">{{ $appt->notes ?? '-' }}</td>
                             <td class="px-3 py-2 flex gap-2">
-                                <!-- Cancel -->
                                 <form action="{{ route('patient.appointments.cancel', $appt->id) }}" method="POST">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700">Cancel</button>
                                 </form>
-
-                                <!-- Reschedule -->
                                 <form action="{{ route('patient.appointments.reschedule', $appt->id) }}" method="POST" class="flex items-center gap-1">
                                     @csrf
                                     @method('PATCH')

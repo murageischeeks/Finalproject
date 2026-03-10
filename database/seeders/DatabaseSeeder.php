@@ -7,20 +7,17 @@ use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Example normal test user
+        // Test user
         User::factory()->create([
-            'name' => 'Test User',
+            'name'  => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // ✅ Run the AdminSeeder to create your admin account
         $this->call([
             AdminSeeder::class,
+            TriageRulesSeeder::class,
         ]);
     }
 }

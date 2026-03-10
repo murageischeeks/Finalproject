@@ -10,39 +10,29 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'openmrs_uuid',
         'license_number',
-        'license_verified', // ✅ Added this line
+        'license_verified',
         'department',
         'specialization',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'license_verified' => 'boolean', // ✅ Added this cast
+        'license_verified'  => 'boolean',
     ];
 
-    /**
-     * Relationships
-     */
+    // ── Relationships ──────────────────────────────────────────
     public function doctorAppointments()
     {
         return $this->hasMany(Appointment::class, 'doctor_id');
@@ -53,15 +43,24 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class, 'patient_id');
     }
 
-    // Helper: check if user is doctor
-    public function isDoctor()
+    public function followUpSubmissions()
+    {
+        return $this->hasMany(FollowUpSubmission::class, 'patient_id');
+    }
+
+    // ── Role Helpers ───────────────────────────────────────────
+    public function isDoctor(): bool
     {
         return $this->role === 'doctor';
     }
 
-    // Helper: check if user is patient
-    public function isPatient()
+    public function isPatient(): bool
     {
         return $this->role === 'patient';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 }

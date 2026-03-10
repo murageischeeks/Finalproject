@@ -30,17 +30,27 @@
             </div>
 
             <div class="flex flex-col space-y-2">
-                <a href="{{ route('doctor.profile.edit') }}" 
+                <a href="{{ route('doctor.profile.edit') }}"
                    class="bg-white text-blue-600 px-4 py-2 rounded text-sm font-medium hover:bg-gray-100 transition shadow">
                     Edit Profile
                 </a>
-                <a href="{{ route('doctor.lab_results.index') }}" 
+                <a href="{{ route('doctor.lab_results.index') }}"
                    class="bg-green-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-600 transition shadow">
                     Lab Results
                 </a>
-                <a href="{{ route('doctor.prescriptions.index') }}" 
+                <a href="{{ route('doctor.prescriptions.index') }}"
                    class="bg-purple-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-600 transition shadow">
                     Prescriptions
+                </a>
+                {{-- ── Follow-Up Triage Button ── --}}
+                <a href="{{ route('doctor.followup.index') }}"
+                   class="relative bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 transition shadow flex items-center justify-between gap-2">
+                    <span>📋 Follow-Up Triage</span>
+                    @if(isset($highUrgencyCount) && $highUrgencyCount > 0)
+                        <span class="bg-white text-red-600 font-bold text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {{ $highUrgencyCount }}
+                        </span>
+                    @endif
                 </a>
             </div>
         </div>
@@ -49,23 +59,76 @@
         @if(!($profile->license_verified ?? false))
             <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow">
                 <strong>⚠️ Your license is pending admin verification.</strong><br>
-                You currently have limited access. Once verified, you’ll be able to manage appointments, view the queue, and issue prescriptions.
+                You currently have limited access. Once verified, you'll be able to manage appointments, view the queue, and issue prescriptions.
             </div>
         @else
+
             <!-- STATS -->
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                @foreach(['today_appointments' => 'Appointments Today', 'upcoming' => 'Upcoming', 'pending' => 'Pending', 'completed' => 'Completed'] as $key => $label)
-                    <div class="bg-white shadow-md hover:shadow-lg transition rounded-lg p-4 text-center border-t-4 
-                        @if($key == 'today_appointments') border-blue-500 
-                        @elseif($key == 'upcoming') border-indigo-500 
-                        @elseif($key == 'pending') border-yellow-500 
-                        @elseif($key == 'completed') border-green-500 
-                        @endif">
-                        <div class="text-sm text-gray-500">{{ $label }}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                @foreach([
+                    'today_appointments' => ['label' => 'Appointments Today', 'color' => 'border-blue-500'],
+                    'upcoming'           => ['label' => 'Upcoming',           'color' => 'border-indigo-500'],
+                    'pending'            => ['label' => 'Pending',            'color' => 'border-yellow-500'],
+                    'completed'          => ['label' => 'Completed',          'color' => 'border-green-500'],
+                ] as $key => $item)
+                    <div class="bg-white shadow-md hover:shadow-lg transition rounded-lg p-4 text-center border-t-4 {{ $item['color'] }}">
+                        <div class="text-sm text-gray-500">{{ $item['label'] }}</div>
                         <div class="text-3xl font-extrabold text-gray-800">{{ $stats[$key] ?? 0 }}</div>
                     </div>
                 @endforeach
+
+                {{-- Follow-Up Urgency Stat --}}
+                <div class="bg-white shadow-md hover:shadow-lg transition rounded-lg p-4 text-center border-t-4 border-red-500">
+                    <div class="text-sm text-gray-500">High Urgency Reports</div>
+                    <div class="text-3xl font-extrabold text-red-600">{{ $highUrgencyCount ?? 0 }}</div>
+                </div>
             </div>
+
+            {{-- ── Pending Follow-Up Alerts ── --}}
+            @if(isset($recentFollowUps) && $recentFollowUps->isNotEmpty())
+            <div class="bg-white shadow sm:rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">
+                        Pending Follow-Up Reports
+                        @if($highUrgencyCount > 0)
+                            <span class="ml-2 bg-red-100 text-red-700 text-sm font-semibold px-2 py-1 rounded-full">
+                                {{ $highUrgencyCount }} High Urgency
+                            </span>
+                        @endif
+                    </h2>
+                    <a href="{{ route('doctor.followup.index') }}"
+                       class="text-blue-600 hover:underline text-sm">View All</a>
+                </div>
+                <div class="space-y-3">
+                    @foreach($recentFollowUps as $submission)
+                    @php
+                        $badgeColors = [
+                            'High'   => 'bg-red-100 text-red-700',
+                            'Medium' => 'bg-yellow-100 text-yellow-700',
+                            'Low'    => 'bg-green-100 text-green-700',
+                        ];
+                        $badge = $badgeColors[$submission->urgency_level] ?? 'bg-gray-100 text-gray-600';
+                    @endphp
+                    <div class="flex justify-between items-center border border-gray-100 rounded-lg p-3 {{ $submission->urgency_level === 'High' ? 'border-l-4 border-red-400' : '' }}">
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ $submission->patient->name }}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ implode(', ', array_map(fn($s) => ucwords(str_replace('_', ' ', $s)), $submission->symptom_categories)) }}
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">{{ $submission->created_at->format('d M Y, h:i A') }}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $badge }}">
+                                {{ $submission->urgency_level }}
+                            </span>
+                            <a href="{{ route('doctor.followup.show', $submission->id) }}"
+                               class="text-xs text-blue-600 hover:underline">View</a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <!-- LIVE QUEUE -->
             <div class="bg-white shadow sm:rounded-lg p-6 overflow-x-auto">
@@ -82,7 +145,7 @@
                                     </span>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="px-2 py-1 text-xs rounded 
+                                    <span class="px-2 py-1 text-xs rounded
                                         @if(($appointment->status ?? '') == 'pending') bg-yellow-100 text-yellow-800
                                         @elseif(($appointment->status ?? '') == 'in_progress') bg-blue-100 text-blue-800
                                         @elseif(($appointment->status ?? '') == 'completed') bg-green-100 text-green-800
@@ -91,10 +154,9 @@
                                         @endif">
                                         {{ ucfirst($appointment->status ?? '—') }}
                                     </span>
-                                    <button 
+                                    <button
                                         x-data @click="$dispatch('open-modal', { content: '{{ addslashes($appointment->notes ?? 'No notes') }}' })"
-                                        class="bg-gray-100 px-2 py-1 rounded text-sm hover:bg-gray-200"
-                                    >
+                                        class="bg-gray-100 px-2 py-1 rounded text-sm hover:bg-gray-200">
                                         View Note
                                     </button>
                                 </div>
@@ -150,10 +212,9 @@
                                     </td>
                                     <td class="px-4 py-2">
                                         @if(!empty($appointment->notes))
-                                            <button 
+                                            <button
                                                 x-data @click="$dispatch('open-modal', { content: '{{ addslashes($appointment->notes) }}' })"
-                                                class="bg-gray-100 px-2 py-1 rounded text-sm hover:bg-gray-200"
-                                            >
+                                                class="bg-gray-100 px-2 py-1 rounded text-sm hover:bg-gray-200">
                                                 View Note
                                             </button>
                                         @else
@@ -184,6 +245,7 @@
                     <p class="text-gray-500">No appointments found.</p>
                 @endif
             </div>
+
         @endif
     </div>
 </div>

@@ -8,19 +8,18 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Appointment;
 use App\Models\LabResult;
 use App\Models\Prescription;
+use App\Models\FollowUpSubmission;
 use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
-    // Show doctor dashboard
     public function index(Request $request)
     {
         $doctorId = Auth::id();
-        $profile = Auth::user(); // Authenticated doctor
+        $profile  = Auth::user();
 
-        // Optional filter by date (default = show all)
-        $filterDate = $request->query('date');
-
+        // Optional date filter
+        $filterDate        = $request->query('date');
         $appointmentsQuery = Appointment::with('patient')
             ->where('doctor_id', $doctorId)
             ->orderBy('appointment_date');
@@ -35,51 +34,57 @@ class DashboardController extends Controller
         $today = Carbon::today()->toDateString();
         $stats = [
             'today_appointments' => Appointment::where('doctor_id', $doctorId)
-                ->whereDate('appointment_date', $today)
-                ->count(),
-            'upcoming' => Appointment::where('doctor_id', $doctorId)
-                ->whereDate('appointment_date', '>', $today)
-                ->count(),
-            'pending' => Appointment::where('doctor_id', $doctorId)
-                ->where('status', 'pending')
-                ->count(),
+                ->whereDate('appointment_date', $today)->count(),
+            'upcoming'  => Appointment::where('doctor_id', $doctorId)
+                ->whereDate('appointment_date', '>', $today)->count(),
+            'pending'   => Appointment::where('doctor_id', $doctorId)
+                ->where('status', 'pending')->count(),
             'completed' => Appointment::where('doctor_id', $doctorId)
-                ->where('status', 'completed')
-                ->count(),
+                ->where('status', 'completed')->count(),
         ];
 
-        // Live queue (today only, ordered by ticket)
+        // Live queue
         $queue = Appointment::with('patient')
             ->where('doctor_id', $doctorId)
             ->whereDate('appointment_date', $today)
             ->orderBy('ticket_number')
             ->get();
 
-        // Recent lab results created by this doctor
+        // Recent lab results & prescriptions
         $labResults = LabResult::with('patient')
             ->where('doctor_id', $doctorId)
-            ->latest()
-            ->take(5)
-            ->get();
+            ->latest()->take(5)->get();
 
-        // Recent prescriptions created by this doctor
         $prescriptions = Prescription::with('patient')
             ->where('doctor_id', $doctorId)
-            ->latest()
+            ->latest()->take(5)->get();
+
+        // ── Follow-Up Data ─────────────────────────────────────
+        $highUrgencyCount = FollowUpSubmission::whereNull('reviewed_at')
+            ->where('doctor_id', $doctorId)
+            ->where('urgency_level', 'High')
+            ->count();
+
+        $recentFollowUps = FollowUpSubmission::with('patient')
+            ->where('doctor_id', $doctorId)
+            ->whereNull('reviewed_at')
+            ->byUrgency()
+            ->orderBy('created_at', 'asc')
             ->take(5)
             ->get();
 
         return view('doctor.dashboard', compact(
             'profile', 'stats', 'queue', 'appointments', 'filterDate',
-            'labResults', 'prescriptions'
+            'labResults', 'prescriptions',
+            'highUrgencyCount', 'recentFollowUps'
         ));
     }
 
-    // Update appointment status
     public function updateStatus(Request $request, Appointment $appointment)
     {
         if ($appointment->status === 'cancelled') {
-            return redirect()->route('doctor.dashboard')->with('error', 'Cannot update a cancelled appointment.');
+            return redirect()->route('doctor.dashboard')
+                ->with('error', 'Cannot update a cancelled appointment.');
         }
 
         if ($appointment->doctor_id !== Auth::id()) {
@@ -93,14 +98,15 @@ class DashboardController extends Controller
         $appointment->status = $request->status;
         $appointment->save();
 
-        return redirect()->route('doctor.dashboard')->with('success', 'Appointment status updated.');
+        return redirect()->route('doctor.dashboard')
+            ->with('success', 'Appointment status updated.');
     }
 
-    // Reschedule appointment
     public function reschedule(Request $request, Appointment $appointment)
     {
         if ($appointment->status === 'cancelled') {
-            return redirect()->route('doctor.dashboard')->with('error', 'Cannot reschedule a cancelled appointment.');
+            return redirect()->route('doctor.dashboard')
+                ->with('error', 'Cannot reschedule a cancelled appointment.');
         }
 
         if ($appointment->doctor_id !== Auth::id()) {
@@ -111,36 +117,38 @@ class DashboardController extends Controller
             'scheduled_at' => 'required|date|after:now',
         ]);
 
-        $appointment->scheduled_at = $request->scheduled_at;
+        $appointment->scheduled_at     = $request->scheduled_at;
         $appointment->appointment_date = Carbon::parse($request->scheduled_at)->toDateString();
-        $appointment->status = 'pending'; // reset to pending after reschedule
+        $appointment->status           = 'pending';
         $appointment->save();
 
-        return redirect()->route('doctor.dashboard')->with('success', 'Appointment rescheduled.');
+        return redirect()->route('doctor.dashboard')
+            ->with('success', 'Appointment rescheduled.');
     }
 
-    // Optional: Show profile edit page
     public function editProfile()
     {
         $doctor = Auth::user();
         return view('doctor.profile.edit', compact('doctor'));
     }
 
-    // Optional: Update profile
     public function updateProfile(Request $request)
     {
         $doctor = Auth::user();
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $doctor->id,
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|email|unique:users,email,' . $doctor->id,
             'specialization' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
+            'department'     => 'nullable|string|max:255',
             'license_number' => 'nullable|string|max:255',
         ]);
 
-        $doctor->update($request->only('name', 'email', 'specialization', 'department', 'license_number'));
+        $doctor->update($request->only(
+            'name', 'email', 'specialization', 'department', 'license_number'
+        ));
 
-        return redirect()->route('doctor.dashboard')->with('success', 'Profile updated.');
+        return redirect()->route('doctor.dashboard')
+            ->with('success', 'Profile updated.');
     }
 }

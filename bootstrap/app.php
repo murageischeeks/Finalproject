@@ -11,9 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // 👇 Register aliases here
+        // ── Role middleware alias ──────────────────────────────
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
+
+        // ── Exclude EMR receiver API from CSRF protection ─────
+        // These routes receive machine-to-machine HTTP requests
+        // from the middleware pipeline, not browser form submissions
+        $middleware->validateCsrfTokens(except: [
+            'api/emr/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

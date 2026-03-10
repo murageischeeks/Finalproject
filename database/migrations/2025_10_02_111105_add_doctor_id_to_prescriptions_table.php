@@ -11,16 +11,12 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::table('prescriptions', function (Blueprint $table) {
-        $table->foreignId('doctor_id')->nullable()->constrained('users')->onDelete('cascade');
-    });
+    
 }
 
 public function down()
 {
-    Schema::table('prescriptions', function (Blueprint $table) {
-        $table->dropConstrainedForeignId('doctor_id');
-    });
+    
 }
 
 };

@@ -7,38 +7,39 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
-    /**
-     * Show the doctor profile page
-     */
     public function editDoctor()
     {
-        $doctor = Auth::user(); 
+        $doctor = Auth::user();
         return view('doctor.profile', compact('doctor'));
     }
 
-    /**
-     * Show the patient profile page
-     */
     public function editPatient()
     {
-        $patient = Auth::user(); 
+        $patient = Auth::user();
         return view('patient.profile', compact('patient'));
     }
 
-    /**
-     * Update profile for any user
-     */
+    public function updateDoctor(Request $request)
+    {
+        return $this->update($request);
+    }
+
+    public function updatePatient(Request $request)
+    {
+        return $this->update($request);
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|confirmed|min:8',
         ]);
 
-        $user->name = $validated['name'];
+        $user->name  = $validated['name'];
         $user->email = $validated['email'];
 
         if (!empty($validated['password'])) {
@@ -50,16 +51,11 @@ class ProfileController extends Controller
         return redirect()->back()->with('success', 'Profile updated successfully.');
     }
 
-    /**
-     * Delete account
-     */
     public function destroy(Request $request)
     {
         $user = Auth::user();
         Auth::logout();
-
         $user->delete();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

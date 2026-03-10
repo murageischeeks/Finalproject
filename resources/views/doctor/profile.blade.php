@@ -11,39 +11,36 @@
             </div>
         @endif
 
-        <!-- Updated form action for doctors -->
+        {{-- UPDATE FORM --}}
         <form method="POST" action="{{ route('doctor.profile.update') }}">
             @csrf
             @method('PATCH')
 
-            <!-- Name -->
             <div class="mb-4">
                 <label for="name" class="block font-medium text-gray-700">Full Name</label>
                 <input id="name" type="text" name="name"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('name', $user->name ?? '') }}" required>
+                       value="{{ old('name', $doctor->name ?? '') }}" required>
                 @error('name')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
-            <!-- Email -->
             <div class="mb-4">
                 <label for="email" class="block font-medium text-gray-700">Email Address</label>
                 <input id="email" type="email" name="email"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('email', $user->email ?? '') }}" required>
+                       value="{{ old('email', $doctor->email ?? '') }}" required>
                 @error('email')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
-            <!-- Optional Fields -->
             <div class="mb-4">
                 <label for="specialization" class="block font-medium text-gray-700">Specialization</label>
                 <input id="specialization" type="text" name="specialization"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('specialization', $user->specialization ?? '') }}">
+                       value="{{ old('specialization', $doctor->specialization ?? '') }}">
                 @error('specialization')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
@@ -53,7 +50,7 @@
                 <label for="department" class="block font-medium text-gray-700">Department</label>
                 <input id="department" type="text" name="department"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('department', $user->department ?? '') }}">
+                       value="{{ old('department', $doctor->department ?? '') }}">
                 @error('department')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
@@ -63,15 +60,14 @@
                 <label for="license_number" class="block font-medium text-gray-700">License Number</label>
                 <input id="license_number" type="text" name="license_number"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('license_number', $user->license_number ?? '') }}">
+                       value="{{ old('license_number', $doctor->license_number ?? '') }}">
                 @error('license_number')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
-            <!-- Password -->
             <div class="mb-4">
-                <label for="password" class="block font-medium text-gray-700">New Password (leave blank to keep current)</label>
+                <label for="password" class="block font-medium text-gray-700">New Password <span class="text-gray-400 font-normal">(leave blank to keep current)</span></label>
                 <input id="password" type="password" name="password"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 @error('password')
@@ -79,29 +75,32 @@
                 @enderror
             </div>
 
-            <!-- Confirm Password -->
-            <div class="mb-4">
+            <div class="mb-6">
                 <label for="password_confirmation" class="block font-medium text-gray-700">Confirm Password</label>
                 <input id="password_confirmation" type="password" name="password_confirmation"
                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
 
-            <div class="flex space-x-4">
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                    Update Profile
-                </button>
-
-                <form method="POST" action="{{ route('doctor.profile.destroy') }}" class="inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                            class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-                            onclick="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
-                        Delete Account
-                    </button>
-                </form>
-            </div>
+            <button type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                Update Profile
+            </button>
         </form>
+
+        {{-- DELETE FORM — outside update form ──────────────── --}}
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <form method="POST" action="{{ route('doctor.profile.destroy') }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                        class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+                        onclick="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+                    Delete Account
+                </button>
+            </form>
+        </div>
+
     </div>
 </div>
 @endsection

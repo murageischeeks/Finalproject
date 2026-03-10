@@ -1,0 +1,186 @@
+Folder PATH listing for volume New Volume
+Volume serial number is 689C-7695
+X:\FPROJECT\HOSPITAL-SYSTEM\APP
++---Filament
+|   \---Resources
+|       |   AppointmentResource.php
+|       |   DoctorResource.php
+|       |   LabResultResource.php
+|       |   PatientResource.php
+|       |   
+|       +---AppointmentResource
+|       |   \---Pages
+|       |           CreateAppointment.php
+|       |           EditAppointment.php
+|       |           ListAppointments.php
+|       |           
+|       +---DoctorResource
+|       |   \---Pages
+|       |           CreateDoctor.php
+|       |           EditDoctor.php
+|       |           ListDoctors.php
+|       |           
+|       +---LabResultResource
+|       |   \---Pages
+|       |           CreateLabResult.php
+|       |           EditLabResult.php
+|       |           ListLabResults.php
+|       |           
+|       +---PatientResource
+|       |   \---Pages
+|       |           CreatePatient.php
+|       |           EditPatient.php
+|       |           ListPatients.php
+|       |           
+|       \---PrescriptionResource
+|           \---Pages
+|                   CreatePrescription.php
+|                   EditPrescription.php
+|                   ListPrescriptions.php
+|                   
++---Http
+|   |   Kernel.php
+|   |   
+|   +---Controllers
+|   |   |   Controller.php
+|   |   |   ProfileController.php
+|   |   |   
+|   |   +---Admin
+|   |   |       DashboardController.php
+|   |   |       
+|   |   +---Auth
+|   |   |       AuthenticatedSessionController.php
+|   |   |       ConfirmablePasswordController.php
+|   |   |       EmailVerificationNotificationController.php
+|   |   |       EmailVerificationPromptController.php
+|   |   |       NewPasswordController.php
+|   |   |       PasswordController.php
+|   |   |       PasswordResetLinkController.php
+|   |   |       RegisteredUserController.php
+|   |   |       VerifyEmailController.php
+|   |   |       
+|   |   +---Doctor
+|   |   |       AppointmentController.php
+|   |   |       DashboardController.php
+|   |   |       LabResultController.php
+|   |   |       PrescriptionController.php
+|   |   |       
+|   |   \---Patient
+|   |           AppointmentController.php
+|   |           DashboardController.php
+|   |           LabResultController.php
+|   |           PrescriptionController.php
+|   |           
+|   +---Middleware
+|   |       RoleMiddleware.php
+|   |       
+|   \---Requests
+|       |   ProfileUpdateRequest.php
+|       |   
+|       \---Auth
+|               LoginRequest.php
+|               
++---Mail
+|       AppointmentStatusMail.php
+|       
++---Models
+|       Admin.php
+|       Appointment.php
+|       Doctor.php
+|       LabResult.php
+|       Patient.php
+|       Prescription.php
+|       User.php
+|       
++---Providers
+|   |   AppServiceProvider.php
+|   |   
+|   \---Filament
+|           AdminPanelProvider.php
+|           
+\---View
+    \---Components
+            AppLayout.php
+            DoctorLayout.php
+            GuestLayout.php
+            
+Folder PATH listing for volume New Volume
+Volume serial number is 689C-7695
+X:\FPROJECT\HOSPITAL-SYSTEM\RESOURCES
++---css
+|       app.css
+|       
++---js
+|       app.js
+|       bootstrap.js
+|       
+\---views
+    |   dashboard.blade.php
+    |   welcome.blade.php
+    |   
+    +---admin
+    |       dashboard.blade.php
+    |       
+    +---auth
+    |       confirm-password.blade.php
+    |       forgot-password.blade.php
+    |       login.blade.php
+    |       register.blade.php
+    |       reset-password.blade.php
+    |       verify-email.blade.php
+    |       
+    +---components
+    |       application-logo.blade.php
+    |       auth-card.blade.php
+    |       auth-session-status.blade.php
+    |       danger-button.blade.php
+    |       doctor-layout.blade.php
+    |       dropdown-link.blade.php
+    |       dropdown.blade.php
+    |       guest-layout.blade.php
+    |       input-error.blade.php
+    |       input-label.blade.php
+    |       modal.blade.php
+    |       nav-link.blade.php
+    |       primary-button.blade.php
+    |       responsive-nav-link.blade.php
+    |       secondary-button.blade.php
+    |       text-input.blade.php
+    |       
+    +---doctor
+    |       dashboard.blade.php
+    |       lab_results.blade.php
+    |       prescriptions.blade.php
+    |       profile.blade.php
+    |       
+    +---emails
+    |       appointment-status.blade.php
+    |       
+    +---layouts
+    |       app.blade.php
+    |       guest.blade.php
+    |       navigation.blade.php
+    |       
+    +---patient
+    |       dashboard.blade.php
+    |       lab_results.blade.php
+    |       prescriptions.blade.php
+    |       profile.blade.php
+    |       
+    \---profile
+        |   edit.blade.php
+        |   
+        \---partials
+                delete-user-form.blade.php
+                update-password-form.blade.php
+                update-profile-information-form.blade.php
+                
+Folder PATH listing for volume New Volume
+Volume serial number is 689C-7695
+X:\FPROJECT\HOSPITAL-SYSTEM\ROUTES
+    auth.php
+    console.php
+    web.php
+    
+No subfolders exist 
+
