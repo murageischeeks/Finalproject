@@ -51,3 +51,4 @@ class LabResultController extends Controller
                          ->with('success', 'Lab result uploaded successfully.');
     }
 }
+

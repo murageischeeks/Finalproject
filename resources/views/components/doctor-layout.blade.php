@@ -17,7 +17,6 @@
             <h1 class="text-lg font-semibold">Doctor Dashboard</h1>
             <div class="flex space-x-4">
                 <a href="{{ route('doctor.dashboard') }}" class="hover:text-gray-200">Home</a>
-                <a href="{{ route('doctor.availability.index') }}" class="hover:text-gray-200">Availability</a>
                 <a href="{{ route('logout') }}" 
                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                    class="hover:text-gray-200">Logout</a>

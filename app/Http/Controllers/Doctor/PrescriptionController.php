@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PrescriptionController extends Controller
 {
@@ -16,7 +17,7 @@ class PrescriptionController extends Controller
 
         // Get prescriptions with doctor & patient to avoid null errors
         $prescriptions = Prescription::with(['doctor', 'patient'])
-            ->where('doctor_id', auth()->id())
+            ->where('doctor_id', Auth::guard('doctor')->id())
             ->latest()
             ->get();
 
@@ -33,7 +34,7 @@ class PrescriptionController extends Controller
         ]);
 
         Prescription::create([
-            'doctor_id'  => auth()->id(),
+            'doctor_id'  => Auth::guard('doctor')->id(),
             'patient_id' => $request->patient_id,
             'medicine'   => $request->medicine,
             'dosage'     => $request->dosage,

@@ -58,6 +58,17 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pipeline Status</label>
+            <select name="sync_status"
+                    class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50">
+                <option value="">All Statuses</option>
+                <option value="Synced" {{ request('sync_status') === 'Synced' ? 'selected' : '' }}>✓ Synced to EMR</option>
+                <option value="Failed" {{ request('sync_status') === 'Failed' ? 'selected' : '' }}>⚠ Sync Failed</option>
+                <option value="Pending" {{ request('sync_status') === 'Pending' ? 'selected' : '' }}>⏳ Pending</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Symptom</label>
             <select name="symptom"
                     class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50">
@@ -125,7 +136,21 @@
                 <tr class="hover:bg-gray-50 transition {{ $uc['bar'] }}">
                     <td class="px-5 py-4">
                         <p class="font-semibold text-gray-800">{{ $submission->patient->name }}</p>
-                        <p class="text-gray-400 text-xs mt-0.5">{{ $submission->patient->email }}</p>
+                        <p class="text-gray-400 text-xs mt-0.5 mb-1">{{ $submission->patient->email }}</p>
+                        {{-- Pipeline Status Indicator --}}
+                        @if($submission->sync_status === 'Synced')
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                Pipeline: ✓ All stages passed | EMR Synced ✓
+                            </span>
+                        @elseif($submission->sync_status === 'Failed')
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                                Pipeline: ⚠ Sync Failed
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
+                                Pipeline: ⏳ {{ $submission->sync_status }}
+                            </span>
+                        @endif
                     </td>
                     <td class="px-5 py-4 text-gray-600 max-w-xs">
                         <div class="flex flex-wrap gap-1">
@@ -157,10 +182,16 @@
                         <p>{{ $submission->created_at->format('h:i A') }}</p>
                     </td>
                     <td class="px-5 py-4">
-                        <a href="{{ route('doctor.followup.show', $submission->id) }}"
-                           class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
-                            View Details
-                        </a>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('doctor.followup.show', $submission->id) }}"
+                               class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
+                                Review
+                            </a>
+                            <button x-data @click="$dispatch('open-pipeline-modal', { url: '{{ route('middleware.trace', $submission->id) }}' })"
+                                    class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+                                View Pipeline
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 @endforeach
@@ -183,5 +214,46 @@
             });
     }, 60000);
 </script>
+
+{{-- ── Pipeline Trace Modal (Alpine.js) ── --}}
+<div x-data="{ open: false, url: '' }"
+     x-on:open-pipeline-modal.window="url = $event.detail.url; open = true;"
+     x-show="open"
+     style="display: none;"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 sm:p-6"
+     x-transition.opacity>
+     
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+         @click.away="open = false">
+         
+        {{-- Modal Header --}}
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 shrink-0">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Pipeline Trace</h3>
+                <p class="text-xs text-gray-500">View real-time middleware validation and EMR sync status.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a :href="url" target="_blank" class="text-sm font-semibold text-blue-600 hover:underline">View Full Details ↗</a>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-600 transition bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        {{-- Iframe Content --}}
+        <div class="flex-1 bg-gray-100 relative">
+            <template x-if="open">
+                <iframe :src="url + '?modal=1'" class="w-full h-full border-0 rounded-b-2xl"></iframe>
+            </template>
+        </div>
+    </div>
+</div>
 
 @endsection

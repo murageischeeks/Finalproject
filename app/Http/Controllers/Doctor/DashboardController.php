@@ -65,6 +65,11 @@ class DashboardController extends Controller
             ->where('urgency_level', 'High')
             ->count();
 
+        $failedSyncCount = FollowUpSubmission::whereNull('reviewed_at')
+            ->where('doctor_id', $doctorId)
+            ->where('sync_status', 'Failed')
+            ->count();
+
         $recentFollowUps = FollowUpSubmission::with('patient')
             ->where('doctor_id', $doctorId)
             ->whereNull('reviewed_at')
@@ -76,7 +81,7 @@ class DashboardController extends Controller
         return view('doctor.dashboard', compact(
             'profile', 'stats', 'queue', 'appointments', 'filterDate',
             'labResults', 'prescriptions',
-            'highUrgencyCount', 'recentFollowUps'
+            'highUrgencyCount', 'failedSyncCount', 'recentFollowUps'
         ));
     }
 
@@ -152,3 +157,4 @@ class DashboardController extends Controller
             ->with('success', 'Profile updated.');
     }
 }
+

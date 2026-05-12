@@ -33,12 +33,20 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session',
+            'driver'   => 'session',
+            'provider' => 'users',
+        ],
+
+        // Separate guard for doctors — uses its own session key (login_doctor_HASH)
+        // This allows a doctor and a patient to be logged in simultaneously
+        // in the same browser without conflicting sessions.
+        'doctor' => [
+            'driver'   => 'session',
             'provider' => 'users',
         ],
 
         'admin' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'admins',
         ],
     ],

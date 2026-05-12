@@ -10,6 +10,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+use App\Http\Controllers\EmrReceiverController;
 
 class SyncSubmissionToEMR implements ShouldQueue
 {
@@ -20,8 +22,12 @@ class SyncSubmissionToEMR implements ShouldQueue
 
     public function __construct(
         public FollowUpSubmission $submission,
-        public array $payload
-    ) {}
+        public array $payload,
+        public ?int $userId = null
+    ) {
+        // Capture the authenticated user ID at dispatch time (HTTP context)
+        $this->userId = $userId ?? auth()->id();
+    }
 
     public function handle(): void
     {
@@ -38,21 +44,22 @@ class SyncSubmissionToEMR implements ShouldQueue
                 'person'      => $this->payload['person'] ?? 'unknown',
                 'concept'     => $this->payload['concept'],
                 'obsDatetime' => $this->payload['obsDatetime'],
-            ]
+            ],
+            userId:       $this->userId
         );
 
-        // ── POST to simulated OpenMRS receiver ─────────────────
-        $response = Http::withHeaders([
-            'Accept'       => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->post(
-            config('openmrs.base_url') . '/api/emr/observations',
-            $this->payload
-        );
+        // ── Bypass HTTP POST to avoid deadlock on local single-threaded server ──
+        // Since we are simulating OpenMRS within the same app, we can just call the controller directly.
+        $request = Request::create('/api/emr/observations', 'POST', $this->payload);
+        $controller = new EmrReceiverController();
+        $response = $controller->store($request);
 
-        if ($response->status() === 201) {
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode === 201) {
             // ── Sync successful ────────────────────────────────
-            $observationUuid = $response->json('uuid');
+            $responseData = $response->getData(true);
+            $observationUuid = $responseData['uuid'];
 
             $this->submission->update([
                 'sync_status'              => 'Synced',
@@ -66,9 +73,10 @@ class SyncSubmissionToEMR implements ShouldQueue
                 outcome:      'success',
                 meta:         [
                     'observation_uuid' => $observationUuid,
-                    'emr_response'     => $response->json(),
+                    'emr_response'     => $responseData,
                     'http_status'      => 201,
-                ]
+                ],
+                userId:       $this->userId
             );
 
         } else {
@@ -79,14 +87,15 @@ class SyncSubmissionToEMR implements ShouldQueue
                 resourceId:   $this->submission->id,
                 outcome:      'failure',
                 meta:         [
-                    'http_status'   => $response->status(),
-                    'response_body' => $response->body(),
+                    'http_status'   => $statusCode,
+                    'response_body' => $response->getContent(),
                     'attempt'       => $this->attempts(),
-                ]
+                ],
+                userId:       $this->userId
             );
 
             throw new \Exception(
-                "EMR sync failed with HTTP {$response->status()}: {$response->body()}"
+                "EMR sync failed with HTTP {$statusCode}: {$response->getContent()}"
             );
         }
     }
@@ -103,7 +112,8 @@ class SyncSubmissionToEMR implements ShouldQueue
             meta:         [
                 'error'    => $e->getMessage(),
                 'attempts' => $this->tries,
-            ]
+            ],
+            userId:       $this->userId
         );
     }
 }

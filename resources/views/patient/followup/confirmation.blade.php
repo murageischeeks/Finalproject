@@ -73,18 +73,27 @@
     </div>
 
     {{-- Actions --}}
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col sm:flex-row gap-3">
         <a href="{{ route('patient.followup.index') }}"
-           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-2xl
-                  transition text-center shadow-lg shadow-blue-200">
-            View My Report History
+           class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3.5 rounded-2xl transition text-center">
+            Report History
         </a>
-        <a href="{{ route('patient.dashboard') }}"
-           class="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3.5 rounded-2xl
-                  transition text-center border border-gray-200">
-            Back to Dashboard
+        <a href="{{ route('middleware.trace', $submission->id) }}"
+           class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-2xl transition text-center shadow-md shadow-indigo-200">
+            🔎 View Pipeline Trace
         </a>
     </div>
+
+    @if($submission->openmrs_observation_uuid)
+    <div class="mt-5 pt-5 border-t border-gray-100 text-center">
+        <p class="text-xs text-gray-500 font-medium mb-3 uppercase tracking-wider">Enterprise Integration</p>
+        <a href="{{ url('/api/emr/observations/' . $submission->openmrs_observation_uuid) }}" target="_blank"
+           class="inline-flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-xl transition border border-green-200 shadow-sm text-sm">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            View Synced OpenMRS FHIR Data
+        </a>
+    </div>
+    @endif
 
 </div>
 </div>

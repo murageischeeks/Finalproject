@@ -16,7 +16,13 @@ class ProcessFollowUpSubmission implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public FollowUpSubmission $submission) {}
+    public ?int $userId;
+
+    public function __construct(public FollowUpSubmission $submission)
+    {
+        // Capture the authenticated user ID at dispatch time (HTTP context)
+        $this->userId = auth()->id();
+    }
 
     public function handle(
         SubmissionValidationService $validator,
@@ -36,7 +42,8 @@ class ProcessFollowUpSubmission implements ShouldQueue
                 resourceType: 'follow_up_submission',
                 resourceId:   $this->submission->id,
                 outcome:      'failure',
-                meta:         ['reason' => $validation->reason()]
+                meta:         ['reason' => $validation->reason()],
+                userId:       $this->userId
             );
 
             return;
@@ -47,7 +54,8 @@ class ProcessFollowUpSubmission implements ShouldQueue
             resourceType: 'follow_up_submission',
             resourceId:   $this->submission->id,
             outcome:      'success',
-            meta:         ['urgency' => $this->submission->urgency_level]
+            meta:         ['urgency' => $this->submission->urgency_level],
+            userId:       $this->userId
         );
 
         // ── Stage 3: Data Transformation (Component 3) ────────
@@ -58,11 +66,12 @@ class ProcessFollowUpSubmission implements ShouldQueue
             resourceType: 'follow_up_submission',
             resourceId:   $this->submission->id,
             outcome:      'success',
-            meta:         ['payload_keys' => array_keys($payload)]
+            meta:         ['payload_keys' => array_keys($payload)],
+            userId:       $this->userId
         );
 
         // ── Stage 4: EMR Sync (stubbed until OpenMRS is ready) ─
-        SyncSubmissionToEMR::dispatch($this->submission, $payload);
+        SyncSubmissionToEMR::dispatch($this->submission, $payload, $this->userId);
     }
 
     public function failed(\Throwable $e): void
@@ -74,7 +83,8 @@ class ProcessFollowUpSubmission implements ShouldQueue
             resourceType: 'follow_up_submission',
             resourceId:   $this->submission->id,
             outcome:      'failure',
-            meta:         ['error' => $e->getMessage()]
+            meta:         ['error' => $e->getMessage()],
+            userId:       $this->userId
         );
     }
 }

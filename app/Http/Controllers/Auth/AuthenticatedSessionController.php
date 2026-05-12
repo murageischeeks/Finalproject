@@ -18,35 +18,49 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     *
+     * Doctors authenticate against the 'doctor' guard, patients against the
+     * default 'web' guard. This gives each role its own session key
+     * (login_doctor_XXXHASH vs login_web_XXXHASH), allowing both to be
+     * active simultaneously in the same browser.
      */
     public function store(Request $request)
     {
-        // Validate login request
         $credentials = $request->validate([
             'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        // Attempt login
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        // First try the doctor guard
+        if (Auth::guard('doctor')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $user = Auth::guard('doctor')->user();
 
-            $user = Auth::user();
-
-            // Redirect based on role
             if ($user->role === 'doctor') {
                 return redirect()->route('doctor.dashboard');
-            } elseif ($user->role === 'patient') {
-                return redirect()->route('patient.dashboard');
-            } elseif ($user->role === 'admin') {
-                return redirect('/admin'); // Filament admin panel
             }
 
-            // fallback
-            return redirect('/');
+            // Not a doctor — log them out of doctor guard and fall through
+            Auth::guard('doctor')->logout();
         }
 
-        // If login fails
+        // Try the web (patient/admin) guard
+        if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            $user = Auth::guard('web')->user();
+
+            if ($user->role === 'patient') {
+                return redirect()->route('patient.dashboard');
+            }
+
+            if ($user->role === 'admin') {
+                return redirect('/admin');
+            }
+
+            // Unknown role
+            Auth::guard('web')->logout();
+        }
+
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
@@ -54,13 +68,26 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Destroy an authenticated session (logout).
+     *
+     * Each logout form specifies which guard to log out of via a hidden field,
+     * so logging out as a patient does NOT end the doctor session and vice versa.
      */
     public function destroy(Request $request)
     {
-        Auth::logout();
+        $guard = $request->input('guard', 'web');
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Only allow known guards
+        if (!in_array($guard, ['web', 'doctor'])) {
+            $guard = 'web';
+        }
+
+        Auth::guard($guard)->logout();
+
+        // Only invalidate the full session if no one is still logged in
+        if (!Auth::guard('web')->check() && !Auth::guard('doctor')->check()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return redirect('/');
     }

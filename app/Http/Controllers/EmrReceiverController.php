@@ -58,12 +58,17 @@ class EmrReceiverController extends Controller
     {
         $observation = EmrObservation::where('uuid', $uuid)->firstOrFail();
 
+        $valueData = json_decode($observation->value, true) ?? [];
+        $patientName = $valueData['patientName'] ?? 'Unknown Patient';
+        
         return response()->json([
             'uuid'         => $observation->uuid,
             'person'       => $observation->person,
+            'patientName'  => $patientName,
             'concept'      => $observation->concept,
+            'display'      => 'Follow-Up Observation — ' . $patientName,
             'obsDatetime'  => $observation->obs_datetime,
-            'value'        => json_decode($observation->value, true),
+            'value'        => $valueData,
             'comment'      => $observation->comment,
             'links'        => [
                 [

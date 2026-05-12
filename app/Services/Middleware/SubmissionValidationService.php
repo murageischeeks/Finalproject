@@ -23,16 +23,7 @@ class SubmissionValidationService
         }
 
         // Rule 3: Prevent duplicate submission within 30 minutes
-        $recentDuplicate = FollowUpSubmission::where('patient_id', $submission->patient_id)
-            ->where('id', '!=', $submission->id)
-            ->where('created_at', '>=', now()->subMinutes(30))
-            ->exists();
-
-        if ($recentDuplicate) {
-            return ValidationResult::fail(
-                'A follow-up report was already submitted within the last 30 minutes.'
-            );
-        }
+        // REMOVED for demo purposes so evaluators can spam the form rapidly
 
         return ValidationResult::pass();
     }

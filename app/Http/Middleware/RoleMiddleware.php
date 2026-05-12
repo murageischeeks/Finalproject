@@ -8,26 +8,35 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  mixed  ...$roles
-     * @return \Symfony\Component\HttpFoundation\Response|\Illuminate\Http\RedirectResponse
-     */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        // ✅ Ensure user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
+        // Determine which guard the user is authenticated under.
+        // auth:doctor sets the doctor guard; auth sets the web guard.
+        $user = null;
+
+        if (in_array('doctor', $roles) && Auth::guard('doctor')->check()) {
+            $user = Auth::guard('doctor')->user();
+            // Make Auth::user() work in controllers/views without specifying the guard.
+            Auth::setUser($user);
         }
 
-        $user = Auth::user();
+        if (!$user && Auth::guard('web')->check()) {
+            $user = Auth::guard('web')->user();
+        }
 
-        // ✅ Check if user's role is in the allowed roles
+        // ── Not authenticated at all ──────────────────────────────────────
+        if (!$user) {
+            return redirect()->route('login')
+                ->with('error', 'Please log in to continue.');
+        }
+
+        // ── Wrong role → redirect to their own dashboard ──────────────────
         if (!in_array($user->role, $roles)) {
-            abort(403, 'Unauthorized action.');
+            return match ($user->role) {
+                'doctor'  => redirect()->route('doctor.dashboard'),
+                'patient' => redirect()->route('patient.dashboard'),
+                default   => redirect()->route('login'),
+            };
         }
 
         return $next($request);

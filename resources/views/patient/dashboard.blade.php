@@ -1,256 +1,254 @@
 @extends('layouts.app')
 
+@section('title', 'Patient Dashboard')
+
 @section('content')
-<div class="max-w-6xl mx-auto p-6 space-y-6">
 
-    <h1 class="text-2xl font-bold mb-4">Patient Dashboard</h1>
+{{-- ── PAGE TITLE ── --}}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-surface-900">Patient Dashboard</h1>
+        <p class="text-sm text-surface-500 mt-0.5">Welcome back, {{ auth()->user()->name }}</p>
+    </div>
+    <a href="{{ route('patient.followup.create') }}" class="btn-primary btn-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New Follow-Up
+    </a>
+</div>
 
-    @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-3 rounded">{{ session('success') }}</div>
-    @endif
+{{-- Flash messages --}}
+@if(session('success'))
+    <div class="alert alert-success mb-6 animate-fade-in" data-auto-dismiss="5000">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
+@endif
 
-    <!-- MY PROFILE -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-2">My Profile</h2>
-        <div class="flex justify-between items-center">
-            <div>
-                <p><strong>Name:</strong> {{ auth()->user()->name }}</p>
-                <p><strong>Email:</strong> {{ auth()->user()->email }}</p>
-                <p><strong>Phone:</strong> {{ auth()->user()->phone ?? '-' }}</p>
-                <p><strong>Address:</strong> {{ auth()->user()->address ?? '-' }}</p>
+{{-- ── TOP ROW: Profile + Quick Access ── --}}
+<div class="grid lg:grid-cols-3 gap-6 mb-6">
+
+    {{-- Profile Card --}}
+    <div class="card lg:col-span-1">
+        <div class="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-t-xl text-white">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-14 h-14 rounded-xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-2xl font-extrabold text-white">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                </div>
+                <div>
+                    <h2 class="font-bold text-lg leading-tight">{{ auth()->user()->name }}</h2>
+                    <p class="text-teal-200 text-sm">{{ auth()->user()->email }}</p>
+                </div>
             </div>
-            <div>
-                <a href="{{ route('patient.profile') }}" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Edit Profile</a>
-            </div>
+            @if(auth()->user()->phone)
+                <p class="text-sm text-teal-100"><strong class="text-white">Phone:</strong> {{ auth()->user()->phone }}</p>
+            @endif
+            @if(auth()->user()->address)
+                <p class="text-sm text-teal-100 mt-0.5"><strong class="text-white">Address:</strong> {{ auth()->user()->address }}</p>
+            @endif
+        </div>
+        <div class="p-4 border-t border-surface-100">
+            <a href="{{ route('patient.profile') }}" class="btn-secondary w-full text-center btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Edit Profile
+            </a>
         </div>
     </div>
 
-    <!-- QUICK ACCESS -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {{-- Quick Access Cards --}}
+    <div class="lg:col-span-2 grid sm:grid-cols-3 gap-4">
         <a href="{{ route('patient.labResults.index') }}"
-           class="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-lg shadow text-center">
-            <h2 class="text-lg font-bold">📊 Lab Results</h2>
-            <p class="text-sm mt-2">View your recent lab results and history</p>
+           class="card flex flex-col items-start p-5 hover:shadow-card-md transition-shadow group no-underline">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:bg-purple-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="font-semibold text-surface-800">Lab Results</h3>
+            <p class="text-xs text-surface-500 mt-1 leading-relaxed">View your test results and history</p>
         </a>
 
         <a href="{{ route('patient.prescriptions.index') }}"
-           class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-lg shadow text-center">
-            <h2 class="text-lg font-bold">💊 Prescriptions</h2>
-            <p class="text-sm mt-2">View and download your prescriptions</p>
+           class="card flex flex-col items-start p-5 hover:shadow-card-md transition-shadow group no-underline">
+            <div class="w-10 h-10 rounded-lg bg-medical-50 text-medical-600 flex items-center justify-center mb-3 group-hover:bg-medical-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+            </div>
+            <h3 class="font-semibold text-surface-800">Prescriptions</h3>
+            <p class="text-xs text-surface-500 mt-1 leading-relaxed">View your active medications</p>
         </a>
 
-        {{-- ── Follow-Up Module ── --}}
         <a href="{{ route('patient.followup.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg shadow text-center">
-            <h2 class="text-lg font-bold">📋 Follow-Up Report</h2>
-            <p class="text-sm mt-2">Submit a post-consultation follow-up report</p>
+           class="card flex flex-col items-start p-5 hover:shadow-card-md transition-shadow group no-underline">
+            <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-3 group-hover:bg-brand-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="font-semibold text-surface-800">Submit Follow-Up</h3>
+            <p class="text-xs text-surface-500 mt-1 leading-relaxed">Post-consultation follow-up form</p>
         </a>
     </div>
+</div>
 
-    {{-- ── Recent Follow-Up Submissions ── --}}
-    @php
-        $recentSubmissions = auth()->user()->followUpSubmissions()->latest()->take(3)->get();
-    @endphp
-
+{{-- ── RECENT FOLLOW-UPS ── --}}
+@php $recentSubmissions = auth()->user()->followUpSubmissions()->latest()->take(3)->get(); @endphp
+<div class="card mb-6">
+    <div class="card-header">
+        <h2 class="card-title">Recent Follow-Up Reports</h2>
+        <a href="{{ route('patient.followup.index') }}" class="btn-ghost btn-sm">View All</a>
+    </div>
     @if($recentSubmissions->isNotEmpty())
-    <div class="bg-white shadow rounded-lg p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">Recent Follow-Up Reports</h2>
-            <a href="{{ route('patient.followup.index') }}"
-               class="text-blue-600 hover:underline text-sm">View All</a>
-        </div>
-        <div class="space-y-3">
-            @foreach($recentSubmissions as $submission)
+        <div class="divide-y divide-surface-100">
+            @foreach($recentSubmissions as $sub)
             @php
-                $colors = [
-                    'High'   => 'bg-red-100 text-red-700',
-                    'Medium' => 'bg-yellow-100 text-yellow-700',
-                    'Low'    => 'bg-green-100 text-green-700',
-                ];
-                $color = $colors[$submission->urgency_level] ?? 'bg-gray-100 text-gray-600';
+                $color = ['High'=>'badge-red','Medium'=>'badge-yellow','Low'=>'badge-green'][$sub->urgency_level] ?? 'badge-gray';
             @endphp
-            <div class="flex justify-between items-center border border-gray-100 rounded-lg p-3">
-                <div>
-                    <p class="text-sm text-gray-700 font-medium">
-                        {{ implode(', ', array_map(fn($s) => ucwords(str_replace('_', ' ', $s)), $submission->symptom_categories)) }}
+            <div class="flex items-center justify-between px-6 py-4 hover:bg-surface-50 transition">
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-sm text-surface-800 truncate">
+                        {{ implode(', ', array_map(fn($s) => ucwords(str_replace('_', ' ', $s)), $sub->symptom_categories)) }}
                     </p>
-                    <p class="text-xs text-gray-400 mt-1">{{ $submission->created_at->format('d M Y, h:i A') }}</p>
-                    @if($submission->doctor_response)
-                        <p class="text-xs text-blue-600 mt-1">✓ Doctor responded</p>
+                    <p class="text-xs text-surface-400 mt-0.5">{{ $sub->created_at->format('d M Y, h:i A') }}</p>
+                    @if($sub->doctor_response)
+                        <p class="text-xs text-medical-600 font-medium mt-0.5">✓ Doctor has responded</p>
                     @endif
                 </div>
-                <div class="flex flex-col items-end gap-2">
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $color }}">
-                        {{ $submission->urgency_level ?? 'Pending' }}
+                <div class="flex flex-col items-end gap-1.5 ml-4 flex-shrink-0">
+                    <span class="{{ $color }}">{{ $sub->urgency_level ?? 'Pending' }}</span>
+                    <span class="text-xs {{ $sub->reviewed_at ? 'text-medical-600' : 'text-amber-600' }}">
+                        {{ $sub->reviewed_at ? 'Reviewed' : 'Pending Review' }}
                     </span>
-                    @if($submission->reviewed_at)
-                        <span class="text-xs text-green-600">Reviewed</span>
-                    @else
-                        <span class="text-xs text-yellow-600">Pending Review</span>
-                    @endif
                 </div>
             </div>
             @endforeach
         </div>
-        <div class="mt-4">
-            <a href="{{ route('patient.followup.create') }}"
-               class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-                + Submit New Follow-Up Report
+        <div class="px-6 py-4 bg-surface-50 border-t border-surface-100 rounded-b-xl">
+            <a href="{{ route('patient.followup.create') }}" class="btn-primary btn-sm w-full text-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Submit New Follow-Up Report
             </a>
         </div>
-    </div>
     @else
-    <div class="bg-white shadow rounded-lg p-6">
-        <div class="flex justify-between items-center mb-2">
-            <h2 class="text-xl font-semibold">Follow-Up Reports</h2>
+        <div class="px-6 py-10 text-center">
+            <svg class="w-10 h-10 text-surface-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p class="text-sm text-surface-400 font-medium mb-3">No follow-up reports yet.</p>
+            <a href="{{ route('patient.followup.create') }}" class="btn-primary btn-sm">Submit Your First Report</a>
         </div>
-        <p class="text-gray-500 text-sm mb-4">No follow-up reports submitted yet.</p>
-        <a href="{{ route('patient.followup.create') }}"
-           class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-            + Submit Your First Report
-        </a>
-    </div>
     @endif
+</div>
 
-    <!-- SEARCH / FILTER -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <form method="GET" action="{{ route('patient.dashboard') }}" class="flex flex-col sm:flex-row gap-4">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search doctor by name or specialization" class="border rounded p-2 flex-1">
-            <select name="specialization" class="border rounded p-2">
+{{-- ── FIND A DOCTOR ── --}}
+<div class="card mb-6">
+    <div class="card-header">
+        <h2 class="card-title">Find a Doctor & Book Appointment</h2>
+    </div>
+    <div class="p-6 border-b border-surface-100">
+        <form method="GET" action="{{ route('patient.dashboard') }}" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" name="search" value="{{ request('search') }}"
+                   placeholder="Search by name or specialization…"
+                   class="flex-1">
+            <select name="specialization" class="sm:w-48">
                 <option value="">All Specializations</option>
                 @foreach($specializations as $spec)
                     <option value="{{ $spec }}" {{ request('specialization') == $spec ? 'selected' : '' }}>{{ $spec }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
+            <button type="submit" class="btn-primary">Search</button>
         </form>
     </div>
 
-    <!-- DOCTOR PROFILE & QUEUE -->
-    @isset($doctor)
-        <div class="bg-white shadow rounded-lg p-6">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-xl font-bold">{{ $doctor->name }}</h2>
-                    <p class="text-gray-600"><strong>Specialization:</strong> {{ $doctor->specialization ?? 'N/A' }}</p>
-                    <p class="mt-2"><strong>Bio:</strong> {{ $doctor->bio ?? 'No bio available' }}</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm text-gray-500">Queue for {{ $date ?? \Carbon\Carbon::today()->toDateString() }}</div>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <h3 class="font-semibold mb-2">Today's Queue</h3>
-
-                @if(empty($queue) || $queue->isEmpty())
-                    <div class="text-gray-500">No tickets for this day yet.</div>
-                @else
-                    <ul class="divide-y divide-gray-100">
-                        @foreach($queue as $index => $q)
-                            <li class="py-3 flex justify-between items-center">
-                                <div>
-                                    <div class="text-sm font-medium">🎟️ Ticket #{{ $q->ticket_number }} — {{ $q->patient->name ?? 'Patient' }}</div>
-                                    <div class="text-xs text-gray-500">Status: {{ ucfirst($q->status) }}</div>
-                                </div>
-                                @if($q->patient_id === auth()->id())
-                                    <div class="text-right">
-                                        <div class="text-sm text-indigo-600 font-medium">Your ticket</div>
-                                        <div class="text-xs text-gray-600">Position: {{ $index + 1 }}</div>
-                                    </div>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
-
-            <div class="mt-4">
-                <a href="{{ route('patient.dashboard') }}" class="text-blue-600 hover:underline">← Back</a>
-            </div>
+    @if($doctors->isEmpty())
+        <div class="px-6 py-10 text-center">
+            <p class="text-sm text-surface-400">No doctors match your search criteria.</p>
         </div>
-    @endisset
-
-    <!-- AVAILABLE DOCTORS -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Available Doctors</h2>
-
-        @if($doctors->isEmpty())
-            <p class="text-gray-500">No doctors match your filters.</p>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($doctors as $doc)
-                    <div class="border rounded p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold">{{ $doc->name }}</h3>
-                                <div class="text-sm text-gray-500">{{ $doc->specialization ?? 'General' }}</div>
-                            </div>
-                            <div>
-                                <a href="{{ route('patient.showDoctor', $doc->id) }}" class="text-blue-600 hover:underline text-sm">View</a>
-                            </div>
-                        </div>
-
-                        <form action="{{ route('patient.appointments.store') }}" method="POST" class="mt-4 flex flex-col gap-2">
-                            @csrf
-                            <input type="hidden" name="doctor_id" value="{{ $doc->id }}">
-                            <input type="datetime-local" name="scheduled_at" required class="border rounded p-1 text-sm">
-                            <textarea name="notes" rows="2" placeholder="Reason for visit / Notes" class="border rounded p-2 text-sm"></textarea>
-                            <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Book</button>
-                        </form>
+    @else
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+            @foreach($doctors as $doc)
+            <div class="border border-surface-200 rounded-xl overflow-hidden hover:shadow-card-md transition-shadow">
+                <div class="bg-surface-50 border-b border-surface-200 px-4 py-3 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-700 text-white font-bold flex items-center justify-center text-sm">
+                        {{ strtoupper(substr($doc->name, 0, 1)) }}
                     </div>
-                @endforeach
+                    <div>
+                        <p class="font-semibold text-sm text-surface-800">{{ $doc->name }}</p>
+                        <p class="text-xs text-surface-500">{{ $doc->specialization ?? 'General' }}</p>
+                    </div>
+                    <a href="{{ route('patient.showDoctor', $doc->id) }}"
+                       class="ml-auto text-xs text-brand-600 font-semibold hover:underline">View</a>
+                </div>
+                <form action="{{ route('patient.appointments.store') }}" method="POST" class="p-4 space-y-2">
+                    @csrf
+                    <input type="hidden" name="doctor_id" value="{{ $doc->id }}">
+                    <div class="input-group">
+                        <label class="text-xs">Appointment Date & Time</label>
+                        <input type="datetime-local" name="scheduled_at" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="text-xs">Reason for Visit</label>
+                        <textarea name="notes" rows="2" placeholder="Briefly describe your concern…"></textarea>
+                    </div>
+                    <button type="submit" class="btn-success btn-sm w-full">Book Appointment</button>
+                </form>
             </div>
-        @endif
+            @endforeach
+        </div>
+    @endif
+</div>
+
+{{-- ── MY APPOINTMENTS ── --}}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">My Appointments & Tickets</h2>
     </div>
-
-    <!-- MY UPCOMING APPOINTMENTS -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">My Upcoming Appointments & Tickets</h2>
-
-        @if($appointments->isEmpty())
-            <p class="text-gray-500">No upcoming appointments.</p>
-        @else
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
+    @if($appointments->isEmpty())
+        <div class="px-6 py-10 text-center">
+            <p class="text-sm text-surface-400">No upcoming appointments.</p>
+        </div>
+    @else
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <th class="px-3 py-2 text-left">Doctor</th>
-                        <th class="px-3 py-2 text-left">Date</th>
-                        <th class="px-3 py-2 text-left">Ticket</th>
-                        <th class="px-3 py-2 text-left">Position</th>
-                        <th class="px-3 py-2 text-left">Status</th>
-                        <th class="px-3 py-2 text-left">Notes</th>
-                        <th class="px-3 py-2 text-left">Actions</th>
+                        <th>Doctor</th>
+                        <th>Scheduled</th>
+                        <th>Ticket</th>
+                        <th>Queue #</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @foreach($appointments->sortBy('scheduled_at') as $appt)
-                        <tr>
-                            <td class="px-3 py-2">{{ $appt->doctor->name ?? 'N/A' }}</td>
-                            <td class="px-3 py-2">{{ \Carbon\Carbon::parse($appt->scheduled_at)->format('d M Y H:i') }}</td>
-                            <td class="px-3 py-2">#{{ $appt->ticket_number }}</td>
-                            <td class="px-3 py-2">{{ $positions[$appt->id] ?? '-' }}</td>
-                            <td class="px-3 py-2 capitalize">{{ $appt->status }}</td>
-                            <td class="px-3 py-2 text-gray-600">{{ $appt->notes ?? '-' }}</td>
-                            <td class="px-3 py-2 flex gap-2">
+                    <tr>
+                        <td class="font-medium text-surface-800">{{ $appt->doctor->name ?? 'N/A' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($appt->scheduled_at)->format('d M Y, H:i') }}</td>
+                        <td class="font-semibold text-brand-600">#{{ $appt->ticket_number }}</td>
+                        <td class="text-surface-500">{{ $positions[$appt->id] ?? '—' }}</td>
+                        <td>
+                            <span class="status-{{ $appt->status }}">{{ ucfirst($appt->status) }}</span>
+                        </td>
+                        <td class="text-surface-500 text-xs max-w-xs truncate">{{ $appt->notes ?? '—' }}</td>
+                        <td>
+                            <div class="flex gap-1.5 items-center flex-wrap">
+                                @if($appt->status !== 'cancelled')
                                 <form action="{{ route('patient.appointments.cancel', $appt->id) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700">Cancel</button>
+                                    @csrf @method('PATCH')
+                                    <button class="btn-danger btn-sm">Cancel</button>
                                 </form>
-                                <form action="{{ route('patient.appointments.reschedule', $appt->id) }}" method="POST" class="flex items-center gap-1">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="datetime-local" name="scheduled_at" required class="border rounded p-1 text-xs">
-                                    <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Reschedule</button>
+                                <form action="{{ route('patient.appointments.reschedule', $appt->id) }}" method="POST"
+                                      class="flex items-center gap-1">
+                                    @csrf @method('PATCH')
+                                    <input type="datetime-local" name="scheduled_at" required
+                                           class="border border-surface-200 rounded-md text-xs px-2 py-1 focus:border-brand-600">
+                                    <button class="btn-primary btn-sm">Reschedule</button>
                                 </form>
-                            </td>
-                        </tr>
+                                @else
+                                    <span class="badge-red">Cancelled</span>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
                     @endforeach
                 </tbody>
             </table>
-        @endif
-    </div>
-
+        </div>
+    @endif
 </div>
+
 @endsection

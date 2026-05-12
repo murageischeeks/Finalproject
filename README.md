@@ -1,61 +1,168 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Interoperable Patient Follow-Up System
+## Middleware-Based EMR Integration
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+## System Overview
+This system enables patients to submit post-consultation follow-ups via 
+mobile/web forms, with middleware handling validation, transformation, and 
+synchronization to hospital EMR systems (OpenMRS/KenyaEMR).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Core Innovation:** Middleware pipeline providing complete observability 
+into data processing, validation, and EMR integration.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Prerequisites
 
-## Learning Laravel
+- PHP 8.1 or higher
+- Composer 2.x
+- MySQL 8.0 or higher
+- Node.js 16+ & NPM
+- Git
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Installation Steps
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. Clone repository
+```bash
+git clone https://github.com/murageischeeks/Finalproject.git
+cd Finalproject
+```
 
-## Laravel Sponsors
+2. Install dependencies
+```bash
+composer install
+npm install && npm run build
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Configure environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-### Premium Partners
+4. Setup database
+Create database manually in MySQL (e.g., `followup_system`)
+```bash
+php artisan migrate
+php artisan db:seed --class=DemoDataSeeder
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. Start server
+```bash
+php artisan serve
+```
+Access at: `http://localhost:8000`
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Accessing the System
 
-## Code of Conduct
+### Clinician Dashboard (Main Demo Interface)
+URL: `http://localhost:8000/doctor/dashboard`
+Login: `clinician@hospital.ke` / `password`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Features to Test:
+- View patient follow-up submissions
+- Click "View Pipeline" to see middleware trace
+- Review clinical data and EMR sync status
+- Click "View in EMR" to see integrated record
 
-## Security Vulnerabilities
+### Patient Submission Form
+URL: `http://localhost:8000/patient/followup/create`
+Login: `patient@test.ke` / `password`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Submit a test follow-up to generate new pipeline trace.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Key Features to Demonstrate
+
+✅ **Middleware Pipeline Trace** 
+   - 6 stages: Authentication, Validation, Persistence, Transformation, EMR Sync
+   - Real-time execution metrics
+   - Complete audit trail
+
+✅ **Security Layer** 
+   - JWT authentication
+   - TLS encryption
+   - SQL injection protection
+   - Rate limiting
+
+✅ **Data Validation** 
+   - Schema validation
+   - Business rules engine
+   - Clinical safety checks
+
+✅ **FHIR Transformation**
+   - JSON to FHIR R4 conversion
+   - SNOMED CT concept mapping
+   - HL7 standards compliance
+
+✅ **EMR Integration**
+   - OpenMRS/KenyaEMR sync
+   - Automatic retry on failure
+   - Observation UUID tracking
+
+---
+
+## Testing the Pipeline
+
+1. Login as clinician
+2. Navigate to "Follow-Up Submissions"
+3. Click on any submission (e.g., "Ifay Test")
+4. Click "View Pipeline Trace"
+5. Observe all 6 middleware stages with timestamps and metadata
+6. Click "View in EMR" to see integrated observation
+
+---
+
+## Troubleshooting
+
+**Issue:** Database connection failed
+**Solution:** Verify MySQL is running and credentials in `.env` are correct
+
+**Issue:** "Class not found" errors
+**Solution:** Run `composer dump-autoload`
+
+**Issue:** Pipeline shows EMR sync failed
+**Solution:** This is expected if mock EMR is not configured. System queues 
+for retry - data is safe in local database.
+
+---
+
+## Project Structure
+
+```
+app/
+├── Services/
+│   ├── FollowUpPipelineService.php  # Main middleware orchestration
+│   ├── EMRService.php               # EMR sync handler
+│   └── TriageClassificationService.php            # Urgency calculation
+├── Models/
+│   ├── FollowUpSubmission.php       # Submission model
+│   └── PipelineLog.php              # Pipeline trace model
+└── Http/
+    └── Controllers/
+        └── Doctor/
+            └── FollowUpController.php  # Clinician interface
+```
+
+---
+
+## Technical Stack
+
+- **Backend:** Laravel 11.x
+- **Frontend:** Blade Templates, Tailwind CSS
+- **Database:** MySQL 8.0
+- **Standards:** FHIR R4, HL7, SNOMED CT
+- **Security:** CSRF, TLS 1.3, AES-256 encryption
+
+---
+
+## Contact & Support
+
+For issues or questions during evaluation:
+- GitHub Issues: https://github.com/murageischeeks/Finalproject/issues

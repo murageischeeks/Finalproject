@@ -2,19 +2,20 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
 
-class VerifyCsrfToken
+class VerifyCsrfToken extends Middleware
 {
     /**
-     * Handle an incoming request.
+     * The URIs that should be excluded from CSRF verification.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * The simulated OpenMRS EMR receiver endpoints are excluded because
+     * they are called server-to-server by the SyncSubmissionToEMR queue
+     * job, which does not carry a CSRF token.
+     *
+     * @var array<int, string>
      */
-    public function handle(Request $request, Closure $next): Response
-    {
-        return $next($request);
-    }
+    protected $except = [
+        'api/emr/*',
+    ];
 }

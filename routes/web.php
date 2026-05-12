@@ -13,7 +13,6 @@ use App\Http\Controllers\EmrReceiverController;
 // Doctor Controllers
 use App\Http\Controllers\Doctor\LabResultController as DoctorLabResultController;
 use App\Http\Controllers\Doctor\PrescriptionController as DoctorPrescriptionController;
-use App\Http\Controllers\Doctor\AvailabilityController;
 use App\Http\Controllers\Doctor\FollowUpController as DoctorFollowUpController;
 
 // Patient Controllers
@@ -23,6 +22,11 @@ use App\Http\Controllers\Patient\FollowUpController as PatientFollowUpController
 
 // ==================== LANDING PAGE ==================== //
 Route::get('/', fn() => view('welcome'))->name('home');
+Route::view('/features', 'pages.features')->name('features');
+Route::view('/specialists', 'pages.specialists')->name('specialists');
+Route::view('/about', 'pages.about')->name('about');
+Route::view('/privacy', 'pages.privacy')->name('privacy');
+Route::view('/terms', 'pages.terms')->name('terms');
 
 // ==================== AUTH ROUTES ==================== //
 Route::controller(RegisteredUserController::class)->group(function () {
@@ -45,38 +49,32 @@ Route::prefix('api/emr')->name('emr.')->group(function () {
 });
 
 // ==================== PROFILE ROUTES ==================== //
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['role:doctor'])
+    ->prefix('doctor')->as('doctor.')
+    ->group(function () {
+        Route::get('/profile', [ProfileController::class, 'editDoctor'])->name('profile');
+        Route::get('/profile/edit', [ProfileController::class, 'editDoctor'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'updateDoctor'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 
-    // Doctor profile
-    Route::middleware(['role:doctor'])
-        ->prefix('doctor')
-        ->as('doctor.')
-        ->group(function () {
-            Route::get('/profile', [ProfileController::class, 'editDoctor'])->name('profile');
-            Route::get('/profile/edit', [ProfileController::class, 'editDoctor'])->name('profile.edit');
-            Route::patch('/profile', [ProfileController::class, 'updateDoctor'])->name('profile.update');
-            Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-        });
+Route::middleware(['auth', 'role:patient'])
+    ->prefix('patient')->as('patient.')
+    ->group(function () {
+        Route::get('/profile', [ProfileController::class, 'editPatient'])->name('profile');
+        Route::get('/profile/edit', [ProfileController::class, 'editPatient'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'updatePatient'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 
-    // Patient profile
-    Route::middleware(['role:patient'])
-        ->prefix('patient')
-        ->as('patient.')
-        ->group(function () {
-            Route::get('/profile', [ProfileController::class, 'editPatient'])->name('profile');
-            Route::get('/profile/edit', [ProfileController::class, 'editPatient'])->name('profile.edit');
-            Route::patch('/profile', [ProfileController::class, 'updatePatient'])->name('profile.update');
-            Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-        });
+// ── Middleware Trace Viewer ── (accessible by both guards)
+Route::middleware(['role:doctor,patient'])
+    ->get('/admin/middleware-trace/{submissionId}', \App\Livewire\MiddlewareTrace::class)
+    ->name('middleware.trace');
 
-    // ── Middleware Trace Viewer ────────────────────────────────
-    Route::get('/admin/middleware-trace/{submissionId}',
-        \App\Livewire\MiddlewareTrace::class
-    )->name('middleware.trace');
-});
-
-// ==================== DOCTOR ROUTES ==================== //
-Route::middleware(['auth', 'role:doctor'])
+// ==================== DOCTOR ROUTES ====================
+// Uses auth:doctor so the doctor guard session is validated.
+Route::middleware(['auth:doctor', 'role:doctor'])
     ->prefix('doctor')
     ->as('doctor.')
     ->group(function () {
@@ -84,12 +82,6 @@ Route::middleware(['auth', 'role:doctor'])
 
         // Appointments
         Route::patch('/appointments/{appointment}/status', [DoctorAppointment::class, 'updateStatus'])->name('appointments.updateStatus');
-
-        // Availability
-        Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
-        Route::get('/availability/events', [AvailabilityController::class, 'getEvents'])->name('availability.events');
-        Route::post('/availability', [AvailabilityController::class, 'store'])->name('availability.store');
-        Route::delete('/availability/{availability}', [AvailabilityController::class, 'destroy'])->name('availability.destroy');
 
         // Lab Results
         Route::get('/lab-results', [DoctorLabResultController::class, 'index'])->name('lab_results.index');

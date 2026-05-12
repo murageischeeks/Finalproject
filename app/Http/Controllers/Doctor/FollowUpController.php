@@ -6,17 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\FollowUpSubmission;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FollowUpController extends Controller
 {
     // Main triage dashboard — all pending submissions sorted by urgency
     public function index(Request $request)
     {
-       $query = FollowUpSubmission::with('patient')
-    ->where('doctor_id', auth()->id())    // ← only this doctor's patients
-    ->whereNull('reviewed_at')
-    ->byUrgency()
-    ->orderBy('created_at', 'asc');
+        $query = FollowUpSubmission::with('patient')
+            ->where('doctor_id', Auth::guard('doctor')->id())
+            ->whereNull('reviewed_at')
+            ->byUrgency()
+            ->orderBy('created_at', 'asc');
 
         // Filters
         if ($request->filled('urgency')) {
@@ -35,13 +36,17 @@ class FollowUpController extends Controller
             $query->whereJsonContains('symptom_categories', $request->symptom);
         }
 
+        if ($request->filled('sync_status')) {
+            $query->where('sync_status', $request->sync_status);
+        }
+
         $submissions = $query->paginate(15);
 
         // Count for badge on nav
-       $highUrgencyCount = FollowUpSubmission::whereNull('reviewed_at')
-    ->where('doctor_id', auth()->id())    // ← add this
-    ->where('urgency_level', 'High')
-    ->count();
+        $highUrgencyCount = FollowUpSubmission::whereNull('reviewed_at')
+            ->where('doctor_id', Auth::guard('doctor')->id())
+            ->where('urgency_level', 'High')
+            ->count();
 
         AuditLogService::log(
             action:       'dashboard_viewed',
@@ -56,6 +61,9 @@ class FollowUpController extends Controller
     // Full detail view of a single submission
     public function show(FollowUpSubmission $submission)
     {
+        // ── FIX: ensure doctor can only view their own patients' submissions ──
+        abort_if((int) $submission->doctor_id !== (int) Auth::guard('doctor')->id(), 403);
+
         $submission->load('patient');
 
         // Load this patient's previous submissions for context
@@ -78,6 +86,9 @@ class FollowUpController extends Controller
     // Mark submission as reviewed
     public function markReviewed(FollowUpSubmission $submission)
     {
+        // ── FIX: ownership check ──
+        abort_if((int) $submission->doctor_id !== (int) Auth::guard('doctor')->id(), 403);
+
         $submission->update(['reviewed_at' => now()]);
 
         AuditLogService::log(
@@ -95,6 +106,9 @@ class FollowUpController extends Controller
     // Doctor responds to a submission
     public function respond(Request $request, FollowUpSubmission $submission)
     {
+        // ── FIX: ownership check ──
+        abort_if((int) $submission->doctor_id !== (int) Auth::guard('doctor')->id(), 403);
+
         $request->validate([
             'doctor_response' => 'required|string|max:1000',
         ]);
@@ -120,10 +134,13 @@ class FollowUpController extends Controller
     // Auto-refresh endpoint — called by JS every 60s
     public function refresh()
     {
+        // ── FIX: was missing doctor_id filter, showing all doctors' counts ──
         $count = FollowUpSubmission::whereNull('reviewed_at')
+            ->where('doctor_id', Auth::guard('doctor')->id())
             ->where('urgency_level', 'High')
             ->count();
 
         return response()->json(['high_urgency_count' => $count]);
     }
 }
+

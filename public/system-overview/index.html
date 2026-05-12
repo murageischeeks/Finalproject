@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BleakHospital — System Architecture Overview</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span class="dot"></span> System Architecture Reference</div>
+  <h1>BleakHospital Follow-Up System</h1>
+  <p>A three-tier Laravel / PHP / MySQL middleware broker connecting outpatient patients to KenyaEMR (OpenMRS) — filling the gap in Kenya's digital health stack for general outpatient follow-up.</p>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="overview"><span class="icon">📊</span> Overview</button>
+  <button class="tab-btn" data-tab="dataflow"><span class="icon">🔄</span> Data Flow</button>
+  <button class="tab-btn" data-tab="modules"><span class="icon">🧩</span> Modules</button>
+  <button class="tab-btn" data-tab="architecture"><span class="icon">🏗️</span> Architecture</button>
+  <button class="tab-btn" data-tab="decisions"><span class="icon">⚖️</span> Decisions</button>
+  <button class="tab-btn" data-tab="improvements"><span class="icon">🔧</span> Improvements</button>
+  <button class="tab-btn" data-tab="roadmap"><span class="icon">🗺️</span> Roadmap</button>
+</div>
+
+<!-- ═══ TAB 1: OVERVIEW ═══ -->
+<div id="overview" class="tab-panel active">
+  <div class="grid-4">
+    <div class="stat-card"><div class="stat-label">Modules</div><div class="stat-value blue" data-count="7">0</div><div class="stat-label">Operational</div></div>
+    <div class="stat-card"><div class="stat-label">Pipeline</div><div class="stat-value emerald" data-count="4.2" data-suffix="s">0</div><div class="stat-label">End-to-End</div></div>
+    <div class="stat-card"><div class="stat-label">Triage Tests</div><div class="stat-value purple" data-count="14">0</div><div class="stat-label">100% Pass</div></div>
+    <div class="stat-card"><div class="stat-label">SUS Score</div><div class="stat-value amber" data-count="85">0</div><div class="stat-label">Excellent</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">What It Is</div><div class="card-subtitle">System Identity</div></div></div>
+      <p style="font-size:.82rem;color:var(--text-secondary);line-height:1.7">A secure middleware broker between outpatient patients and KenyaEMR. It fills the structural gap where disease-specific tools like <span class="badge badge-purple">Ushauri</span> exist for HIV patients, but nothing exists for general outpatient follow-up care.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon emerald">🏥</div><div><div class="card-title">Tech Stack</div><div class="card-subtitle">Core Technologies</div></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem">
+        <span class="badge badge-rose">Laravel 11</span><span class="badge badge-blue">PHP 8.2+</span>
+        <span class="badge badge-amber">MySQL</span><span class="badge badge-purple">Sanctum</span>
+        <span class="badge badge-emerald">Livewire</span><span class="badge badge-blue">Filament</span>
+        <span class="badge badge-amber">Blade</span><span class="badge badge-rose">Vite</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: DATA FLOW ═══ -->
+<div id="dataflow" class="tab-panel">
+  <div class="section-title">🔄 Core Pipeline <span class="line"></span></div>
+  <div class="flow-container">
+    <div class="flow-step"><span class="step-icon">📝</span><span class="step-label">Patient Submits</span><span class="step-sub">FollowUpController</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="step-icon">⚡</span><span class="step-label">Triage Scores</span><span class="step-sub">TriageClassificationService</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" style="border-color:var(--accent-rose)"><span class="step-icon">🔴</span><span class="step-label">High Urgency?</span><span class="step-sub">Score ≥ 55</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="step-icon">📧</span><span class="step-label">Notify Doctor</span><span class="step-sub">HighUrgencySubmissionAlert</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="step-icon">🔗</span><span class="step-label">EMR Sync</span><span class="step-sub">SyncSubmissionToEMR Job</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="step-icon">📋</span><span class="step-label">Audit Log</span><span class="step-sub">Write-Only</span></div>
+  </div>
+  <div class="grid-2" style="margin-top:1.5rem">
+    <div class="card">
+      <div class="card-header"><div class="card-icon purple">⚡</div><div><div class="card-title">Triage Scoring</div></div></div>
+      <div class="code-block"><span class="cm">// Step 1: Sum symptom weights</span><br><span class="kw">foreach</span> ($submission-&gt;symptom_categories <span class="kw">as</span> $s)<br>&nbsp;&nbsp;$score += $rules[<span class="str">'symptom_weight'</span>][$s];<br><br><span class="cm">// Step 2: Multiply by severity</span><br>$score *= $rules[<span class="str">'severity_multiplier'</span>][$severity];<br><br><span class="cm">// Step 3: Add recovery modifier</span><br>$score += $rules[<span class="str">'recovery_modifier'</span>][$status];<br><br><span class="cm">// Thresholds: ≥55 High, ≥30 Medium, else Low</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon cyan">🔗</div><div><div class="card-title">EMR Sync Job</div></div></div>
+      <div class="code-block"><span class="kw">class</span> <span class="fn">SyncSubmissionToEMR</span> <span class="kw">implements</span> ShouldQueue<br>{<br>&nbsp;&nbsp;<span class="kw">public int</span> $tries = <span class="num">3</span>;<br>&nbsp;&nbsp;<span class="kw">public array</span> $backoff = [<span class="num">30, 120, 600</span>];<br><br>&nbsp;&nbsp;<span class="cm">// POST → OpenMRS /api/emr/observations</span><br>&nbsp;&nbsp;<span class="cm">// Maps symptoms → SNOMED CT codes</span><br>&nbsp;&nbsp;<span class="cm">// Maps recovery → LOINC codes</span><br>&nbsp;&nbsp;<span class="cm">// Generates FHIR R4 Observation</span><br>}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 3: MODULES ═══ -->
+<div id="modules" class="tab-panel">
+  <div class="section-title">🧩 7 Functional Modules <span class="line"></span></div>
+  <div class="grid-3">
+    <div class="card"><div class="card-header"><div class="card-icon blue">🔐</div><div><div class="card-title">Auth & RBAC</div><div class="card-subtitle">Sanctum + RoleMiddleware</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">Session auth with role-based routing. Three roles: patient, doctor, admin. Custom <code>RoleMiddleware</code> redirects to correct dashboard.</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon emerald">📝</div><div><div class="card-title">Submission Form</div><div class="card-subtitle">Patient FollowUpController</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">6 symptom categories, 1-5 severity, 4 recovery statuses. Auto-links to assigned doctor via latest appointment.</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon purple">⚡</div><div><div class="card-title">Triage Engine</div><div class="card-subtitle">TriageClassificationService</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">DB-driven rules. Weighted symptom scoring × severity multiplier + recovery modifier. 14 unit tests, 100% pass.</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon amber">📊</div><div><div class="card-title">Clinician Dashboard</div><div class="card-subtitle">Doctor FollowUpController</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">Urgency-sorted queue, filters by urgency/date/symptom, auto-refresh every 60s, patient history context.</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon cyan">🔗</div><div><div class="card-title">EMR Sync</div><div class="card-subtitle">Middleware Pipeline</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">3-stage pipeline: Validate → Transform (SNOMED/LOINC/FHIR) → POST. Retry with exponential backoff (30s/120s/600s).</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon rose">🔔</div><div><div class="card-title">Notifications</div><div class="card-subtitle">HighUrgencySubmissionAlert</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">Email notification to assigned doctor on High urgency. Uses Laravel Notification with Queueable trait.</p></div>
+    <div class="card"><div class="card-header"><div class="card-icon blue">📋</div><div><div class="card-title">Audit Logging</div><div class="card-subtitle">AuditLogService</div></div></div><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">Write-only (no UPDATE/DELETE). Tracks every pipeline stage. Uses raw DB::insert for tamper-evidence. Livewire trace viewer.</p></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 4: ARCHITECTURE ═══ -->
+<div id="architecture" class="tab-panel">
+  <div class="section-title">🏗️ Project Structure <span class="line"></span></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">📁</div><div><div class="card-title">Key Files</div></div></div>
+      <div class="file-tree">
+        <span class="dir">app/</span><br>
+        <span class="file highlight">Services/TriageClassificationService.php</span><br>
+        <span class="file highlight">Services/AuditLogService.php</span><br>
+        <span class="file highlight">Services/Middleware/SubmissionTransformer.php</span><br>
+        <span class="file">Services/Middleware/SubmissionValidationService.php</span><br>
+        <span class="file">Services/Middleware/ValidationResult.php</span><br>
+        <span class="file highlight">Jobs/SyncSubmissionToEMR.php</span><br>
+        <span class="file">Jobs/ProcessFollowUpSubmission.php</span><br>
+        <span class="file highlight">Notifications/HighUrgencySubmissionAlert.php</span><br>
+        <span class="file">Http/Middleware/RoleMiddleware.php</span><br>
+        <span class="file">Http/Controllers/EmrReceiverController.php</span><br>
+        <span class="file">Livewire/MiddlewareTrace.php</span><br>
+        <span class="dir">Models/</span><br>
+        <span class="file">FollowUpSubmission.php · AuditLog.php · EmrObservation.php</span><br>
+        <span class="file">User.php · Patient.php · Doctor.php · TriageRule.php</span><br>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon emerald">🗄️</div><div><div class="card-title">Database Schema</div></div></div>
+      <table class="data-table">
+        <tr><th>Table</th><th>Purpose</th><th>Note</th></tr>
+        <tr><td>users</td><td>All actors</td><td>role + openmrs_uuid</td></tr>
+        <tr><td>follow_up_submissions</td><td>Core entity</td><td>JSON symptoms, enum urgency</td></tr>
+        <tr><td>triage_rules</td><td>Scoring rules</td><td>DB-driven weights</td></tr>
+        <tr><td>audit_logs</td><td>Tamper-evident log</td><td>No updated_at</td></tr>
+        <tr><td>emr_observations</td><td>Synced FHIR obs</td><td>UUID-keyed</td></tr>
+        <tr><td>appointments</td><td>Booking queue</td><td>ticket_number</td></tr>
+        <tr><td>prescriptions</td><td>Doctor Rx</td><td>medicine + dosage</td></tr>
+        <tr><td>lab_results</td><td>Lab uploads</td><td>file_path</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 5: DECISIONS ═══ -->
+<div id="decisions" class="tab-panel">
+  <div class="section-title">⚖️ Key Design Decisions <span class="line"></span></div>
+  <div class="decision-row">
+    <div class="decision-item"><div class="decision-chosen">✅ MySQL</div><div class="decision-over">over PostgreSQL</div><div class="decision-reason">OpenMRS uses a relational schema — reduces middleware data mapping complexity. Same DB engine means fewer type mismatches.</div></div>
+    <div class="decision-item"><div class="decision-chosen">✅ Laravel</div><div class="decision-over">over Django / Node.js</div><div class="decision-reason">Native RESTful routing, built-in middleware pipeline, Sanctum auth, Eloquent ORM, and mature queue system for async EMR sync.</div></div>
+  </div>
+  <div class="decision-row">
+    <div class="decision-item"><div class="decision-chosen">✅ MVC Layered</div><div class="decision-over">over Microservices</div><div class="decision-reason">Maintainable within an 8-month academic timeline. Single deployment unit. Service layer provides adequate separation.</div></div>
+    <div class="decision-item"><div class="decision-chosen">✅ Write-Only Audit</div><div class="decision-over">No UPDATE / DELETE</div><div class="decision-reason">audit_logs table uses raw DB::insert. No Eloquent mutators. No updated_at column. Tamper-evident by design.</div></div>
+  </div>
+  <div class="decision-row">
+    <div class="decision-item"><div class="decision-chosen">✅ DB-Driven Triage Rules</div><div class="decision-over">over Hardcoded Logic</div><div class="decision-reason">Weights stored in triage_rules table. Clinicians can adjust scoring without code changes. TriageClassificationService loads rules at runtime.</div></div>
+    <div class="decision-item"><div class="decision-chosen">✅ SNOMED CT + LOINC</div><div class="decision-over">over Custom Codes</div><div class="decision-reason">International clinical terminology standards. SubmissionTransformer maps symptoms to SNOMED CT and recovery status to LOINC for FHIR compliance.</div></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 6: IMPROVEMENTS ═══ -->
+<div id="improvements" class="tab-panel">
+  <div class="section-title">🔧 Code-Level Improvements Found <span class="line"></span></div>
+  <div class="grid-2">
+    <div class="card" style="border-color:var(--accent-rose)">
+      <div class="card-header"><div class="card-icon rose">🚨</div><div><div class="card-title">CSRF Disabled</div><div class="card-subtitle">CRITICAL — Security Risk</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>VerifyCsrfToken.php</code> passes all requests through without checking tokens. This disables CSRF protection entirely. Restore by extending Laravel's base <code>VerifyCsrfToken</code> and using <code>$except</code> to whitelist only API routes.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-rose)">
+      <div class="card-header"><div class="card-icon rose">🚨</div><div><div class="card-title">.env Credentials Exposed</div><div class="card-subtitle">CRITICAL — Gmail App Password in .env</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">Your <code>.env</code> file contains a hardcoded Gmail app password. If this repo is public, rotate immediately. Ensure <code>.env</code> is in <code>.gitignore</code> (currently only 14 bytes — suspiciously small).</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-rose)">
+      <div class="card-header"><div class="card-icon rose">🚨</div><div><div class="card-title">DB Mismatch</div><div class="card-subtitle">CRITICAL — .env says PostgreSQL, docs say MySQL</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>DB_CONNECTION=pgsql</code> in your .env, but the system is described as MySQL. The <code>scopeByUrgency</code> CASE expression works on both, but you should align documentation with actual config.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-amber)">
+      <div class="card-header"><div class="card-icon amber">⚠️</div><div><div class="card-title">Duplicate Triage Logic</div><div class="card-subtitle">MEDIUM — Two implementations exist</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>SubmissionController</code> has a private <code>classifyUrgency()</code> with hardcoded weights + different thresholds (70/40) while <code>TriageClassificationService</code> uses DB-driven rules with thresholds (55/30). Only one should exist.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-amber)">
+      <div class="card-header"><div class="card-icon amber">⚠️</div><div><div class="card-title">Duplicate Controller Routes</div><div class="card-subtitle">MEDIUM — Two controllers handle follow-ups</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">Both <code>Patient\FollowUpController</code> and <code>Patient\SubmissionController</code> handle submission creation with different logic. <code>SubmissionController</code> uses hardcoded triage; <code>FollowUpController</code> uses the service. Consolidate into one.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-amber)">
+      <div class="card-header"><div class="card-icon amber">⚠️</div><div><div class="card-title">Orphan Patient Model</div><div class="card-subtitle">MEDIUM — Extends Authenticatable redundantly</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>Patient.php</code> extends Authenticatable but <code>User.php</code> is used everywhere for patients. The <code>Patient</code> model appears unused — it's a leftover from early development. Remove or repurpose it.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">AuditLogService: Null User</div><div class="card-subtitle">LOW — Queued jobs have no auth context</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>auth()->id()</code> returns null inside queued jobs. <code>SyncSubmissionToEMR</code> calls <code>AuditLogService::log()</code> which always inserts <code>user_id = null</code>. Pass user_id explicitly.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">Missing Doctor Model Integration</div><div class="card-subtitle">LOW — Doctor model is disconnected</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">The <code>Doctor</code> model exists with its own table but is never used. All doctor data lives in the <code>users</code> table with <code>role='doctor'</code>. Remove the model or migrate to a proper polymorphic setup.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">N+1 Query in Dashboard</div><div class="card-subtitle">LOW — Position calculation queries per appointment</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>PatientDashboardController</code> runs a separate query for each appointment to compute queue position. Calculate positions in a single query using <code>DB::raw()</code> window functions or load all at once.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">No Rate Limiting on EMR API</div><div class="card-subtitle">LOW — Open simulated endpoint</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">The <code>/api/emr/observations</code> route has no auth and no rate limiting. In sandbox this is fine, but add <code>throttle</code> middleware and API key auth before any real deployment.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">FollowUpSubmission History: No Pagination</div><div class="card-subtitle">LOW — Patient history loads all records</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6"><code>Patient\FollowUpController::index()</code> uses <code>->get()</code> (loads all), while <code>SubmissionController::index()</code> uses <code>->paginate(10)</code>. Use pagination consistently.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-icon blue">💡</div><div><div class="card-title">Admin Middleware Trace: No Role Guard</div><div class="card-subtitle">LOW — Any logged-in user can view traces</div></div></div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">Route <code>/admin/middleware-trace/{id}</code> only requires <code>auth</code> — not <code>role:admin</code>. Any logged-in patient/doctor can view full audit traces. Add admin role check.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 7: ROADMAP ═══ -->
+<div id="roadmap" class="tab-panel">
+  <div class="section-title">🗺️ Future Roadmap <span class="line"></span></div>
+  <div class="rec-list">
+    <div class="rec-item"><div class="rec-num">1</div><div><div class="rec-title">Swahili Localisation</div><div class="rec-desc">Add <code>lang/sw/</code> translation files. Use Laravel's <code>__('key')</code> helper in all Blade templates. Locale switcher in the patient interface. Priority for accessibility in rural facilities.</div></div></div>
+    <div class="rec-item"><div class="rec-num">2</div><div><div class="rec-title">SMS via Africa's Talking</div><div class="rec-desc">Backup alert channel for High urgency. Install <code>africastalking/africastalking</code> package. Add SMS to <code>HighUrgencySubmissionAlert::via()</code>. Failover when doctor doesn't open email within 15 minutes.</div></div></div>
+    <div class="rec-item"><div class="rec-num">3</div><div><div class="rec-title">Multi-Facility Tenant Isolation</div><div class="rec-desc">Add <code>facility_id</code> to users, submissions, and appointments. Global scope for tenant filtering. Enables national scaling beyond Mbagathi County Referral Hospital.</div></div></div>
+    <div class="rec-item"><div class="rec-num">4</div><div><div class="rec-title">FHIR R4 Full Migration</div><div class="rec-desc">Align with Kenya Digital Health Master Plan 2019–2030. Replace simulated endpoint with a real FHIR server. SubmissionTransformer already produces partial FHIR — extend to full compliance.</div></div></div>
+    <div class="rec-item"><div class="rec-num">5</div><div><div class="rec-title">Consolidate Duplicate Code</div><div class="rec-desc">Remove <code>SubmissionController</code> — route everything through <code>FollowUpController</code> which uses the service-layer triage. Remove orphan <code>Patient</code> and <code>Doctor</code> models. Single source of truth.</div></div></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<script src="app.js"></script>
+</body>
+</html>

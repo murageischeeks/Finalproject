@@ -88,7 +88,8 @@ class FollowUpController extends Controller
 
     public function confirmation(FollowUpSubmission $submission)
     {
-        abort_if($submission->patient_id !== auth()->id(), 403);
+        // ── FIX: cast both to int to avoid strict type mismatch (int vs string) ──
+        abort_if((int) $submission->patient_id !== (int) auth()->id(), 403);
 
         return view('patient.followup.confirmation', compact('submission'));
     }

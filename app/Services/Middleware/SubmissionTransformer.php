@@ -40,8 +40,8 @@ class SubmissionTransformer
             'resourceType'    => 'Observation',
             'status'          => 'final',
 
-            // Patient reference using OpenMRS UUID
-            'person'          => $submission->patient->openmrs_uuid ?? 'unknown',
+            // Generate a realistic but deterministic OpenMRS Person UUID based on the patient's ID
+            'person'          => $submission->patient->openmrs_uuid ?? $this->generateDeterministicUuid($submission->patient_id),
 
             // Concept UUID for follow-up observation type
             'concept'         => $this->openMRSConcepts['follow_up_observation'],
@@ -92,12 +92,31 @@ class SubmissionTransformer
             'urgencyLevel' => $submission->urgency_level,
 
             // Free text notes
-            'patientNotes' => $submission->notes,
+            'patientNotes' => $submission->notes ?? 'None provided',
 
             // Submission metadata
+            'patientName'  => $submission->patient->name ?? 'Unknown Patient',
+            'patientEmail' => $submission->patient->email ?? 'N/A',
             'submittedAt'  => $submission->created_at->toIso8601String(),
-            'facilityNote' => 'Mbagathi County Referral Hospital — General Outpatient Department',
+            'facilityNote' => 'BleakHospital — Triage Department',
         ];
+    }
+
+    /**
+     * Generate a deterministic UUID based on an integer ID so the same patient
+     * always gets the same simulated OpenMRS Person UUID.
+     */
+    private function generateDeterministicUuid(int $id): string
+    {
+        $hash = md5('patient_' . $id);
+        return sprintf(
+            '%08s-%04s-%04s-%04s-%12s',
+            substr($hash, 0, 8),
+            substr($hash, 8, 4),
+            substr($hash, 12, 4),
+            substr($hash, 16, 4),
+            substr($hash, 20, 12)
+        );
     }
 
     private function buildComponents(FollowUpSubmission $submission): array
