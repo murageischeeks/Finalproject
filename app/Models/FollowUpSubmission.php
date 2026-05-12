@@ -26,6 +26,9 @@ class FollowUpSubmission extends Model
     protected $casts = [
         'symptom_categories' => 'array',
         'reviewed_at'        => 'datetime',
+        // NFR1: AES-256-CBC encryption at rest for sensitive free-text fields (KDPA 2019)
+        'notes'              => 'encrypted',
+        'doctor_response'    => 'encrypted',
     ];
 
     // ── Relationships ──────────────────────────────────────────

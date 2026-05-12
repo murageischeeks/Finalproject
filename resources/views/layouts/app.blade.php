@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"><!-- NFR3: min responsive width 320px -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'BleakHospital') }} — @yield('title', 'Portal')</title>
     <meta name="description" content="BleakHospital patient and clinical portal — manage appointments, follow-ups, lab results, and prescriptions.">
