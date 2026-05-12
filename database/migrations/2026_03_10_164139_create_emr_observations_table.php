@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('emr_observations', function (Blueprint $table) {
+        Schema::connection('emr')->create('emr_observations', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
             $table->string('person')->nullable();
@@ -16,13 +16,13 @@ return new class extends Migration
             $table->timestamp('obs_datetime')->nullable();
             $table->text('value');
             $table->string('comment')->nullable();
-            $table->foreignId('follow_up_submission_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedBigInteger('follow_up_submission_id')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('emr_observations');
+        Schema::connection('emr')->dropIfExists('emr_observations');
     }
 };

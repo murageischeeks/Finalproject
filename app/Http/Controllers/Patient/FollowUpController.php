@@ -16,13 +16,23 @@ class FollowUpController extends Controller
 {
     public function create()
     {
-        return view('patient.followup.create');
+        // Fetch unique doctors the patient has visited recently
+        $doctors = Appointment::with('doctor')
+            ->where('patient_id', auth()->id())
+            ->whereNotNull('doctor_id')
+            ->latest('appointment_date')
+            ->get()
+            ->pluck('doctor')
+            ->unique('id');
+
+        return view('patient.followup.create', compact('doctors'));
     }
 
     public function store(Request $request)
     {
         // ── Step 1: Form Validation ────────────────────────────
         $validated = $request->validate([
+            'doctor_id'            => 'required|exists:users,id',
             'symptom_categories'   => 'required|array|min:1',
             'symptom_categories.*' => 'in:fever,pain,swelling,medication_side_effect,wound_concern,general_deterioration',
             'severity'             => 'required|integer|min:1|max:5',
@@ -30,22 +40,20 @@ class FollowUpController extends Controller
             'notes'                => 'nullable|string|max:500',
         ]);
 
-        // ── Step 2: Resolve assigned doctor ───────────────────
-        $latestAppointment = Appointment::where('patient_id', auth()->id())
-            ->whereNotNull('doctor_id')
-            ->latest('appointment_date')
-            ->first();
+        // ── Step 2: Resolve assigned doctor (Manual Override) ──
+        $doctorId = $validated['doctor_id'];
 
         // ── Step 3: Persist submission ─────────────────────────
         $submission = FollowUpSubmission::create([
             'patient_id'         => auth()->id(),
-            'doctor_id'          => $latestAppointment?->doctor_id,
+            'doctor_id'          => $doctorId,
             'symptom_categories' => $validated['symptom_categories'],
             'severity'           => $validated['severity'],
             'recovery_status'    => $validated['recovery_status'],
             'notes'              => $validated['notes'] ?? null,
             'sync_status'        => 'Pending',
         ]);
+
 
         // ── Step 4: Triage classification ──────────────────────
         $triage  = new TriageClassificationService();
@@ -62,8 +70,8 @@ class FollowUpController extends Controller
         );
 
         // ── Step 6: Notify doctor if High urgency ──────────────
-        if ($urgency === 'High' && $latestAppointment?->doctor_id) {
-            $doctor = User::find($latestAppointment->doctor_id);
+        if ($urgency === 'High' && $submission->doctor_id) {
+            $doctor = User::find($submission->doctor_id);
 
             if ($doctor) {
                 $doctor->notify(new HighUrgencySubmissionAlert($submission));

@@ -113,6 +113,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'emr' => [
+            'driver' => env('DB_EMR_CONNECTION', 'sqlite'),
+            'host' => env('DB_EMR_HOST', '127.0.0.1'),
+            'port' => env('DB_EMR_PORT', '5432'),
+            'database' => env('DB_EMR_DATABASE', database_path('emr_database.sqlite')),
+            'username' => env('DB_EMR_USERNAME', 'root'),
+            'password' => env('DB_EMR_PASSWORD', ''),
+            'prefix' => '',
+            'charset' => 'utf8',
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
     ],
 
     /*

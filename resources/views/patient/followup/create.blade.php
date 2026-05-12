@@ -35,6 +35,50 @@
     <form method="POST" action="{{ route('patient.followup.store') }}" class="space-y-5">
         @csrf
 
+        {{-- Doctor Selection --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold text-gray-800">Select Doctor <span class="text-red-500">*</span></h2>
+                    <p class="text-xs text-gray-400">Which doctor did you consult with?</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach($doctors as $doctor)
+                <label class="flex items-center gap-3 p-3.5 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-all duration-150">
+                    <input
+                        type="radio"
+                        name="doctor_id"
+                        value="{{ $doctor->id }}"
+                        class="w-4 h-4 text-brand-600 rounded-full"
+                        {{ old('doctor_id') == $doctor->id ? 'checked' : '' }}
+                        required
+                    >
+                    <div class="w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs font-bold">
+                        {{ strtoupper(substr($doctor->name, 0, 1)) }}
+                    </div>
+                    <div>
+                        <span class="text-sm font-semibold text-gray-700 block">{{ $doctor->name }}</span>
+                        <span class="text-xs text-gray-400">{{ $doctor->specialization ?? 'Specialist' }}</span>
+                    </div>
+                </label>
+                @endforeach
+            </div>
+            @if($doctors->isEmpty())
+                <p class="text-amber-600 text-xs mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                    ⚠️ You haven't had any appointments yet. Please book an appointment first.
+                </p>
+            @endif
+            @error('doctor_id')
+                <p class="text-red-500 text-xs mt-3">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Symptom Categories --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center gap-2 mb-5">

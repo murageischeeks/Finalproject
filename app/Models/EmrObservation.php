@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmrObservation extends Model
 {
+    protected $connection = 'emr';
+
     protected $fillable = [
         'uuid',
         'person',
