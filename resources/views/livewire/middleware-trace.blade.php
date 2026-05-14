@@ -383,9 +383,6 @@
                 </div>
                 @endforeach
 
-                <p class="text-xs text-gray-400 italic text-center pt-2">
-                    💡 Every term in this trace is documented above. If asked during evaluation, you have the full context.
-                </p>
             </div>
         </div>
     </div>
