@@ -15,9 +15,18 @@ class FollowUpController extends Controller
     {
         $query = FollowUpSubmission::with('patient')
             ->where('doctor_id', Auth::guard('doctor')->id())
-            ->whereNull('reviewed_at')
             ->byUrgency()
             ->orderBy('created_at', 'asc');
+
+        // Default to showing only unreviewed (pending) reports unless specified
+        $reviewStatus = $request->get('review_status', 'pending');
+        
+        if ($reviewStatus === 'pending') {
+            $query->whereNull('reviewed_at');
+        } elseif ($reviewStatus === 'reviewed') {
+            $query->whereNotNull('reviewed_at');
+        }
+        // If 'all', we don't add any reviewed_at filter
 
         // Filters
         if ($request->filled('urgency')) {

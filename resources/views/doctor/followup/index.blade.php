@@ -46,6 +46,16 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Review Status</label>
+            <select name="review_status"
+                    class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50">
+                <option value="pending" {{ request('review_status') === 'pending' ? 'selected' : '' }}>⏳ Pending Review</option>
+                <option value="reviewed" {{ request('review_status') === 'reviewed' ? 'selected' : '' }}>✓ Reviewed</option>
+                <option value="all" {{ request('review_status') === 'all' ? 'selected' : '' }}>📁 All Reports</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">From Date</label>
             <input type="date" name="from_date" value="{{ request('from_date') }}"
                    class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50">
@@ -80,6 +90,7 @@
                     'medication_side_effect' => '💊 Medication Side Effect',
                     'wound_concern'          => '🩹 Wound Concern',
                     'general_deterioration'  => '📉 General Deterioration',
+                    'other'                  => '❓ Other / Unlisted',
                 ] as $value => $label)
                 <option value="{{ $value }}" {{ request('symptom') === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach

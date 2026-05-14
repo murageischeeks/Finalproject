@@ -224,22 +224,23 @@
                             <span class="status-{{ $appt->status }}">{{ ucfirst($appt->status) }}</span>
                         </td>
                         <td class="text-surface-500 text-xs max-w-xs truncate">{{ $appt->notes ?? '—' }}</td>
-                        <td>
-                            <div class="flex gap-1.5 items-center flex-wrap">
+                        <td class="w-64">
+                            <div class="flex flex-col gap-2">
                                 @if($appt->status !== 'cancelled')
                                 <form action="{{ route('patient.appointments.cancel', $appt->id) }}" method="POST">
                                     @csrf @method('PATCH')
-                                    <button class="btn-danger btn-sm">Cancel</button>
+                                    <button class="w-full text-[11px] bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded border border-red-200 font-semibold transition">Cancel Appointment</button>
                                 </form>
                                 <form action="{{ route('patient.appointments.reschedule', $appt->id) }}" method="POST"
-                                      class="flex items-center gap-1">
+                                      class="flex flex-col gap-1.5 p-2 bg-surface-50 border border-surface-200 rounded-lg">
                                     @csrf @method('PATCH')
+                                    <p class="text-[10px] font-semibold text-surface-500 uppercase tracking-widest">Reschedule Time</p>
                                     <input type="datetime-local" name="scheduled_at" required
-                                           class="border border-surface-200 rounded-md text-xs px-2 py-1 focus:border-brand-600">
-                                    <button class="btn-primary btn-sm">Reschedule</button>
+                                           class="w-full border border-surface-300 rounded text-[11px] px-2 py-1 focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                                    <button class="w-full text-[11px] bg-brand-600 text-white hover:bg-brand-700 px-3 py-1.5 rounded font-semibold transition">Confirm New Time</button>
                                 </form>
                                 @else
-                                    <span class="badge-red">Cancelled</span>
+                                    <span class="inline-flex items-center justify-center px-2 py-1 rounded text-[11px] font-semibold bg-red-100 text-red-700">Cancelled</span>
                                 @endif
                             </div>
                         </td>

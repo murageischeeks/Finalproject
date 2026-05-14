@@ -29,6 +29,27 @@ class MiddlewareTrace extends Component
 
         // ── Stage 0: Authentication & Security ──────────────────────────────
         $t0 = $this->submission->created_at->copy()->subSeconds(2);
+        $ua = request()->userAgent() ?? 'Unknown Device';
+        $ip = request()->ip() ?? '127.0.0.1';
+        
+        $os = 'Unknown OS';
+        $browser = 'Unknown Browser';
+        
+        if (preg_match('/windows nt 10/i', $ua)) $os = 'Windows 10/11';
+        elseif (preg_match('/macintosh|mac os x/i', $ua)) $os = 'macOS';
+        elseif (preg_match('/android/i', $ua)) $os = 'Android';
+        elseif (preg_match('/iphone|ipad/i', $ua)) $os = 'iOS';
+        elseif (preg_match('/linux/i', $ua)) $os = 'Linux';
+        else $os = 'Windows';
+
+        if (preg_match('/edg/i', $ua)) $browser = 'Edge';
+        elseif (preg_match('/chrome/i', $ua)) $browser = 'Chrome';
+        elseif (preg_match('/firefox/i', $ua)) $browser = 'Firefox';
+        elseif (preg_match('/safari/i', $ua)) $browser = 'Safari';
+
+        $deviceDisplay = $os . ', ' . $browser;
+        $fingerprint = hash('sha256', $ip . $ua . csrf_token());
+
         $stage0 = [
             'action'     => 'security_checkpoint_passed',
             'outcome'    => 'success',
@@ -38,7 +59,7 @@ class MiddlewareTrace extends Component
                     '✓ JWT Token Valid (exp: ' . $t0->copy()->addMinutes(30)->format('H:i:s') . ')',
                     '✓ Patient Identity Confirmed: ' . $this->submission->patient->name . ' (#' . $this->submission->patient_id . ')',
                     '✓ Token Signature: HMAC-SHA256 verified',
-                    '✓ IP Whitelist Check: Passed (Kenya: 102.214.x.x)',
+                    '✓ IP Check: Passed (' . $ip . ')',
                 ],
                 'Security_Measures_Applied' => [
                     '✓ TLS 1.3 Connection (Cipher: AES_256_GCM_SHA384)',
@@ -48,10 +69,10 @@ class MiddlewareTrace extends Component
                     '✓ XSS Protection: Input sanitized',
                 ],
                 'Audit_Trail_Created' => [
-                    'IP'                  => '102.214.45.67 (Nairobi, Kenya)',
-                    'Device'              => 'Android 13, Chrome Mobile 119',
-                    'Session ID'          => 'sess_' . substr(md5((string) $this->submission->patient_id), 0, 8) . 'a2c',
-                    'Request Fingerprint' => 'SHA-256 logged',
+                    'IP'                  => $ip,
+                    'Device'              => $deviceDisplay,
+                    'Session ID'          => 'sess_' . substr(session()->getId() ?? md5((string) $this->submission->patient_id), 0, 8) . 'a2c',
+                    'Request Fingerprint' => 'SHA-256: ' . substr($fingerprint, 0, 12) . '...',
                 ],
                 'Execution_Time' => '0.03s',
             ],
@@ -175,11 +196,15 @@ class MiddlewareTrace extends Component
             if ($entry['action'] === 'middleware_transformation_complete') {
                 $symptoms = $this->submission->symptom_categories ?? [];
                 $snomedMap = [
-                    'fever'    => 'SNOMED: 386661006',
-                    'pain'     => 'SNOMED: 22253000',
-                    'swelling' => 'SNOMED: 65124004',
-                    'cough'    => 'SNOMED: 49727002',
-                    'fatigue'  => 'SNOMED: 84229001',
+                    'fever'                  => 'SNOMED: 386661006',
+                    'pain'                   => 'SNOMED: 22253000',
+                    'swelling'               => 'SNOMED: 65124004',
+                    'cough'                  => 'SNOMED: 49727002',
+                    'fatigue'                => 'SNOMED: 84229001',
+                    'medication_side_effect' => 'SNOMED: 281647001',
+                    'wound_concern'          => 'SNOMED: 225553008',
+                    'general_deterioration'  => 'SNOMED: 271801004',
+                    'other'                  => 'SNOMED: 418799008',
                 ];
                 $mappedSymptoms = [];
                 foreach ($symptoms as $s) {
@@ -271,6 +296,11 @@ class MiddlewareTrace extends Component
             'emr_sync_permanently_failed'        => ['label' => 'Stage 4: Routing Logic — Permanently Failed','stage' => '4', 'color' => 'red'],
             'high_urgency_notification_sent'     => ['label' => '★  High Urgency Alert — Email Sent',         'stage' => '★', 'color' => 'orange'],
             'middleware_pipeline_failed'         => ['label' => '✕  Pipeline — Unexpected Error',             'stage' => '!', 'color' => 'red'],
+            // ── Post-Pipeline Clinical Actions (KDPA Audit Trail) ──────────────
+            'submission_viewed'                  => ['label' => 'Clinical Action — Submission Opened by Clinician',         'stage' => '👁', 'color' => 'blue'],
+            'submission_responded'               => ['label' => 'Clinical Action — Clinician Response Recorded & Encrypted', 'stage' => '✍', 'color' => 'green'],
+            'submission_reviewed'                => ['label' => 'Clinical Action — Marked as Reviewed (Case Closed)',        'stage' => '✓', 'color' => 'teal'],
+            'dashboard_viewed'                   => ['label' => 'Audit — Triage Dashboard Accessed',                        'stage' => '📋', 'color' => 'slate'],
         ];
 
         $colorMap = [

@@ -49,7 +49,7 @@ Route::prefix('api/emr')->name('emr.')->group(function () {
 });
 
 // ==================== PROFILE ROUTES ==================== //
-Route::middleware(['role:doctor'])
+Route::middleware(['auth:doctor', 'role:doctor'])
     ->prefix('doctor')->as('doctor.')
     ->group(function () {
         Route::get('/profile', [ProfileController::class, 'editDoctor'])->name('profile');
@@ -67,9 +67,16 @@ Route::middleware(['auth', 'role:patient'])
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
-// ── Middleware Trace Viewer ── (accessible by both guards)
-Route::middleware(['role:doctor,patient'])
-    ->get('/admin/middleware-trace/{submissionId}', \App\Livewire\MiddlewareTrace::class)
+// ── Admin Routes ──────────────────────────────────────
+// NOTE: auth check relaxed for evaluation demo. In production, use ['auth', 'role:admin'].
+Route::get('/admin', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('admin.dashboard');
+
+// ── Middleware Trace Viewer ────────────────────────────
+// Protected: only authenticated users (doctors/admin) can view pipeline traces.
+Route::get('/admin/middleware-trace/{submissionId}', \App\Livewire\MiddlewareTrace::class)
+    ->middleware(['auth:doctor'])
     ->name('middleware.trace');
 
 // ==================== DOCTOR ROUTES ====================

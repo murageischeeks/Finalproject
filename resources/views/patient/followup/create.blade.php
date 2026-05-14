@@ -100,6 +100,7 @@
                     'medication_side_effect' => ['label' => 'Medication Side Effect', 'icon' => '💊'],
                     'wound_concern'          => ['label' => 'Wound Concern',          'icon' => '🩹'],
                     'general_deterioration'  => ['label' => 'General Deterioration',  'icon' => '📉'],
+                    'other'                  => ['label' => 'Other / Unlisted',       'icon' => '❓'],
                 ] as $value => $item)
                 <label class="flex items-center gap-3 p-3.5 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-150">
                     <input

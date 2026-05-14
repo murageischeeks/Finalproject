@@ -34,9 +34,13 @@ class DashboardController extends Controller
         $today = Carbon::today()->toDateString();
         $stats = [
             'today_appointments' => Appointment::where('doctor_id', $doctorId)
-                ->whereDate('appointment_date', $today)->count(),
+                ->whereDate('appointment_date', $today)
+                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                ->count(),
             'upcoming'  => Appointment::where('doctor_id', $doctorId)
-                ->whereDate('appointment_date', '>', $today)->count(),
+                ->whereDate('appointment_date', '>', $today)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->count(),
             'pending'   => Appointment::where('doctor_id', $doctorId)
                 ->where('status', 'pending')->count(),
             'completed' => Appointment::where('doctor_id', $doctorId)
@@ -87,13 +91,14 @@ class DashboardController extends Controller
 
     public function updateStatus(Request $request, Appointment $appointment)
     {
+        // ── Ownership check FIRST to prevent information leakage ──
+        if ($appointment->doctor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($appointment->status === 'cancelled') {
             return redirect()->route('doctor.dashboard')
                 ->with('error', 'Cannot update a cancelled appointment.');
-        }
-
-        if ($appointment->doctor_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
         }
 
         $request->validate([

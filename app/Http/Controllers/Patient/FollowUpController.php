@@ -34,7 +34,7 @@ class FollowUpController extends Controller
         $validated = $request->validate([
             'doctor_id'            => 'required|exists:users,id',
             'symptom_categories'   => 'required|array|min:1',
-            'symptom_categories.*' => 'in:fever,pain,swelling,medication_side_effect,wound_concern,general_deterioration',
+            'symptom_categories.*' => 'in:fever,pain,swelling,medication_side_effect,wound_concern,general_deterioration,other',
             'severity'             => 'required|integer|min:1|max:5',
             'recovery_status'      => 'required|in:Improving,Stable,Worsening,Uncertain',
             'notes'                => 'nullable|string|max:500',

@@ -20,6 +20,7 @@ class TriageRulesSeeder extends Seeder
             'medication_side_effect' => 35,
             'wound_concern'          => 32,
             'general_deterioration'  => 40,
+            'other'                  => 20,
         ];
 
         foreach ($symptoms as $key => $weight) {

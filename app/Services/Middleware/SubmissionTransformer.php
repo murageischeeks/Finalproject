@@ -15,6 +15,7 @@ class SubmissionTransformer
         'medication_side_effect' => ['code' => '281647001', 'display' => 'Adverse reaction to drug (disorder)'],
         'wound_concern'          => ['code' => '416940007', 'display' => 'Past history of wound care (situation)'],
         'general_deterioration'  => ['code' => '271299001', 'display' => 'Patient condition deteriorated (finding)'],
+        'other'                  => ['code' => '418799008', 'display' => 'Symptom reported by patient (finding)'],
     ];
 
     // ── LOINC Codes for recovery status ───────────────────────

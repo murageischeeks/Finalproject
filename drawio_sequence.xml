@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="Patient" value="Patient" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="40" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="Controller" value="PatientFollowUpController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="220" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="Triage" value="TriageClassificationService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="460" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="DB" value="PostgreSQL DB" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="640" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="Audit" value="AuditLogService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="820" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="Queue" value="ProcessFollowUpSubmission" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="1000" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="API" value="OpenMRS API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="40" width="120" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="100" value="1. POST /patient/followup" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="100" y="100" as="sourcePoint"/>
+        <mxPoint x="280" y="100" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="101" value="2. FollowUpSubmission::create()" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="140" as="sourcePoint"/>
+        <mxPoint x="700" y="140" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="102" value="3. Return record" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="700" y="180" as="sourcePoint"/>
+        <mxPoint x="280" y="180" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="103" value="4. classify(submission)" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="220" as="sourcePoint"/>
+        <mxPoint x="520" y="220" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="104" value="5. Return urgencyLevel" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="520" y="260" as="sourcePoint"/>
+        <mxPoint x="280" y="260" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="105" value="6. update urgency_level" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="300" as="sourcePoint"/>
+        <mxPoint x="700" y="300" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="106" value="7. log('submission_created')" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="340" as="sourcePoint"/>
+        <mxPoint x="880" y="340" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="107" value="8. insert into audit_logs" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="880" y="380" as="sourcePoint"/>
+        <mxPoint x="700" y="380" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="108" value="9. dispatch(submission) to queue" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="420" as="sourcePoint"/>
+        <mxPoint x="1060" y="420" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="109" value="10. 302 Redirect to Confirmation" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="280" y="460" as="sourcePoint"/>
+        <mxPoint x="100" y="460" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="110" value="11. POST /api/emr/observations" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="1060" y="500" as="sourcePoint"/>
+        <mxPoint x="1240" y="500" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="111" value="12. [Success] 201 Created" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="1240" y="540" as="sourcePoint"/>
+        <mxPoint x="1060" y="540" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="112" value="13. update sync_status='Synced'" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="1060" y="580" as="sourcePoint"/>
+        <mxPoint x="700" y="580" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="113" value="14. log('sync_complete')" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1">
+      <mxGeometry width="80" relative="1" as="geometry">
+        <mxPoint x="1060" y="620" as="sourcePoint"/>
+        <mxPoint x="880" y="620" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

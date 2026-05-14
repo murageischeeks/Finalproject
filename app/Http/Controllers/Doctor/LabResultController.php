@@ -20,8 +20,11 @@ class LabResultController extends Controller
         // ✅ Fetch patients for the dropdown
         $patients = User::where('role', 'patient')->get();
 
-        // ✅ Fetch existing lab results with doctor & patient info
-        $labResults = LabResult::with(['patient', 'doctor'])->latest()->get();
+        // ✅ Fetch ONLY this doctor's lab results (scoped by doctor_id)
+        $labResults = LabResult::with(['patient', 'doctor'])
+            ->where('doctor_id', Auth::guard('doctor')->id())
+            ->latest()
+            ->get();
 
         return view('doctor.lab_results', compact('patients', 'labResults'));
     }
