@@ -18,17 +18,26 @@
         </div>
     </div>
 
-    {{-- Validation Errors --}}
+    {{-- Validation Errors & Security Firewall Blocks --}}
     @if ($errors->any())
-    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
-        <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-        </svg>
-        <ul class="text-sm text-red-700 space-y-1">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+        <div class="flex gap-3">
+            <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <div>
+                @if($errors->has('security_block'))
+                    <h3 class="text-red-800 font-bold mb-1">🔥 FIREWALL INTERCEPTION</h3>
+                    <p class="text-sm text-red-700 font-semibold">{{ $errors->first('security_block') }}</p>
+                @else
+                    <ul class="text-sm text-red-700 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
     </div>
     @endif
 
@@ -258,6 +267,62 @@
 </div>
 </div>
 
+
+
+{{-- Modal 2: Page-load Interception Report (Backend Blocked) --}}
+@if($errors->has('security_block') && session('failed_submission_id'))
+<div id="interception-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    {{-- Backdrop --}}
+    <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm transition-opacity"></div>
+    {{-- Modal Panel --}}
+    <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-red-200 flex flex-col animate-alert-bounce">
+        <div class="bg-red-600 px-6 py-4 flex items-center gap-3 text-white">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-black tracking-wide">🔥 ATTACK INTERCEPTED</h3>
+                <p class="text-xs text-red-200 font-semibold">Active Security Firewall Block</p>
+            </div>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+            <div class="space-y-1">
+                <p class="text-sm font-bold text-slate-800">Security Gate 0 Triggered</p>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    A critical security policy violation was intercepted. The transaction has been permanently blocked, and an immutable log entry has been appended to the clinical audit trail.
+                </p>
+            </div>
+            <div class="bg-red-50/50 border border-red-100 rounded-xl p-4 space-y-2">
+                <div class="flex items-center gap-2 text-xs font-semibold text-red-800">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                    Status: Active Interception Blocked
+                </div>
+                <p class="text-xs text-red-700 font-mono">
+                    {{ $errors->first('security_block') }}
+                </p>
+            </div>
+        </div>
+        <div class="bg-slate-50 px-6 py-4 flex rounded-b-2xl">
+            <button type="button" onclick="closeInterception()" class="w-full inline-flex justify-center rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold px-4 py-3 text-sm transition shadow-md shadow-slate-300">
+                Dismiss and Close
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+<style>
+    @keyframes alertBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+    .animate-alert-bounce {
+        animation: alertBounce 1.5s ease-in-out 3;
+    }
+</style>
+
 <script>
     // Severity selector
     const severityColors = {
@@ -271,16 +336,23 @@
     function selectSeverity(value) {
         for (let i = 1; i <= 5; i++) {
             const box = document.getElementById('severity_box_' + i);
-            box.className = box.className
-                .replace(/bg-\w+-500/g, '')
-                .replace(/text-white/g, '')
-                .replace(/border-transparent/g, '');
-            box.classList.add('border-gray-200', 'text-gray-500');
+            if (box) {
+                box.className = box.className
+                    .replace(/bg-\w+-500/g, '')
+                    .replace(/text-white/g, '')
+                    .replace(/border-transparent/g, '');
+                box.classList.add('border-gray-200', 'text-gray-500');
+            }
         }
         const selected = document.getElementById('severity_box_' + value);
-        selected.classList.remove('border-gray-200', 'text-gray-500');
-        selected.classList.add(severityColors[value], 'text-white', 'border-transparent');
-        document.getElementById('severity_' + value).checked = true;
+        if (selected) {
+            selected.classList.remove('border-gray-200', 'text-gray-500');
+            selected.classList.add(severityColors[value], 'text-white', 'border-transparent');
+        }
+        const radio = document.getElementById('severity_' + value);
+        if (radio) {
+            radio.checked = true;
+        }
     }
 
     // Recovery status selector
@@ -295,6 +367,38 @@
             label.classList.add(borderClass, bgClass);
         }
     }
+
+
+
+    // Initialize old values if they exist
+    window.addEventListener('DOMContentLoaded', () => {
+        const activeSeverityInput = document.querySelector('input[name="severity"]:checked');
+        if (activeSeverityInput) {
+            selectSeverity(activeSeverityInput.value);
+        }
+        const activeRecoveryInput = document.querySelector('input[name="recovery_status"]:checked');
+        if (activeRecoveryInput) {
+            const statusVal = activeRecoveryInput.value;
+            const recoveryMap = {
+                'Improving': { border: 'border-green-500', bg: 'bg-green-50' },
+                'Stable': { border: 'border-blue-500', bg: 'bg-blue-50' },
+                'Worsening': { border: 'border-red-500', bg: 'bg-red-50' },
+                'Uncertain': { border: 'border-yellow-500', bg: 'bg-yellow-50' }
+            };
+            const map = recoveryMap[statusVal];
+            if (map) {
+                selectStatus(statusVal, map.border, map.bg);
+            }
+        }
+    });
+
+    function closeInterception() {
+        const modal = document.getElementById('interception-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
 </script>
 
 @endsection
+

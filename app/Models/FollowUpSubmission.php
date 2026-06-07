@@ -37,9 +37,13 @@ class FollowUpSubmission extends Model
         return $this->belongsTo(User::class, 'patient_id');
     }
     public function doctor()
-{
-    return $this->belongsTo(User::class, 'doctor_id');
-}
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class, 'resource_id')->where('resource_type', 'follow_up_submission');
+    }
 
     // ── Scopes for dashboard filtering ────────────────────────
     public function scopePending($query)

@@ -31,34 +31,46 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // First try the doctor guard
-        if (Auth::guard('doctor')->attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            $user = Auth::guard('doctor')->user();
+        // Find the user first to determine their role before logging into a specific guard
+        // This prevents accidentally logging out an active session for the other guard.
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        $isAdmin = false;
 
-            if ($user->role === 'doctor') {
-                return redirect()->route('doctor.dashboard');
+        if (!$user) {
+            $admin = \App\Models\Admin::where('email', $credentials['email'])->first();
+            if ($admin) {
+                $user = $admin;
+                $isAdmin = true;
             }
-
-            // Not a doctor — log them out of doctor guard and fall through
-            Auth::guard('doctor')->logout();
         }
 
-        // Try the web (patient/admin) guard
-        if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            $user = Auth::guard('web')->user();
+        if (!$user || !\Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->onlyInput('email');
+        }
 
-            if ($user->role === 'patient') {
-                return redirect()->route('patient.dashboard');
-            }
+        // Check if the user is already authenticated on ANY guard.
+        // If they are, it means this is a simultaneous login in a new tab.
+        // We skip session regeneration to prevent the CSRF token from changing,
+        // which would cause a "419 Page Expired" error on the already-open tab.
+        $wasAlreadyLoggedIn = Auth::guard('web')->check() || Auth::guard('doctor')->check() || Auth::guard('admin')->check();
 
-            if ($user->role === 'admin') {
+        if ($isAdmin) {
+            if (Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
+                // $request->session()->regenerate(); // Disabled to prevent 419 on other tabs
                 return redirect('/admin');
             }
-
-            // Unknown role
-            Auth::guard('web')->logout();
+        } else if ($user->role === 'doctor') {
+            if (Auth::guard('doctor')->attempt($credentials, $request->boolean('remember'))) {
+                // $request->session()->regenerate(); // Disabled to prevent 419 on other tabs
+                return redirect()->route('doctor.dashboard');
+            }
+        } else if ($user->role === 'patient') {
+            if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
+                // $request->session()->regenerate(); // Disabled to prevent 419 on other tabs
+                return redirect()->route('patient.dashboard');
+            }
         }
 
         return back()->withErrors([
@@ -74,20 +86,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
-        $guard = $request->input('guard', 'web');
+        // To prevent any confusion with Chrome profiles caching sessions,
+        // we will aggressively log out of ALL roles whenever ANY logout button is clicked.
+        Auth::guard('web')->logout();
+        Auth::guard('doctor')->logout();
+        Auth::guard('admin')->logout();
 
-        // Only allow known guards
-        if (!in_array($guard, ['web', 'doctor'])) {
-            $guard = 'web';
-        }
+        // Completely destroy the session and all cookies
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        Auth::guard($guard)->logout();
-
-        // Only invalidate the full session if no one is still logged in
-        if (!Auth::guard('web')->check() && !Auth::guard('doctor')->check()) {
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
+        \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(Auth::guard('web')->getRecallerName()));
+        \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(Auth::guard('doctor')->getRecallerName()));
 
         return redirect('/');
     }

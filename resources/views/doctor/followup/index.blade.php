@@ -149,7 +149,11 @@
                         <p class="font-semibold text-gray-800">{{ $submission->patient->name }}</p>
                         <p class="text-gray-400 text-xs mt-0.5 mb-1">{{ $submission->patient->email }}</p>
                         {{-- Pipeline Status Indicator --}}
-                        @if($submission->sync_status === 'Synced')
+                        @if($submission->auditLogs->contains('action', 'security_checkpoint_failed'))
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full animate-pulse">
+                                Pipeline: ✕ Threat Blocked
+                            </span>
+                        @elseif($submission->sync_status === 'Synced')
                             <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                                 Pipeline: ✓ All stages passed | EMR Synced ✓
                             </span>
@@ -198,7 +202,7 @@
                                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
                                 Review
                             </a>
-                            <button x-data @click="$dispatch('open-pipeline-modal', { url: '{{ route('middleware.trace', $submission->id) }}' })"
+                            <button type="button" x-data @click.prevent="$dispatch('open-pipeline-modal', { url: '{{ route('middleware.trace', $submission->id) }}' })"
                                     class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
                                 View Pipeline
                             </button>
@@ -217,11 +221,15 @@
 </div>
 
 <script>
+    const initialUrgentCount = {{ $highUrgencyCount ?? 0 }};
     setInterval(() => {
         fetch('{{ route('doctor.followup.refresh') }}')
             .then(r => r.json())
             .then(data => {
-                if (data.high_urgency_count > 0) location.reload();
+                // Only reload if a NEW high urgency report came in
+                if (data.high_urgency_count > initialUrgentCount) {
+                    location.reload();
+                }
             });
     }, 60000);
 </script>

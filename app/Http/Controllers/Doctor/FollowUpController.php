@@ -13,10 +13,8 @@ class FollowUpController extends Controller
     // Main triage dashboard — all pending submissions sorted by urgency
     public function index(Request $request)
     {
-        $query = FollowUpSubmission::with('patient')
-            ->where('doctor_id', Auth::guard('doctor')->id())
-            ->byUrgency()
-            ->orderBy('created_at', 'asc');
+        $query = FollowUpSubmission::with(['patient', 'auditLogs'])
+            ->where('doctor_id', Auth::guard('doctor')->id());
 
         // Default to showing only unreviewed (pending) reports unless specified
         $reviewStatus = $request->get('review_status', 'pending');
@@ -48,6 +46,9 @@ class FollowUpController extends Controller
         if ($request->filled('sync_status')) {
             $query->where('sync_status', $request->sync_status);
         }
+
+        // Sort automatically by time (newest first)
+        $query->orderByDesc('created_at');
 
         $submissions = $query->paginate(15);
 

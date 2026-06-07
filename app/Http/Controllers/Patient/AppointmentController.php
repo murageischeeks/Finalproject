@@ -58,7 +58,11 @@ class AppointmentController extends Controller
         ]);
 
         // 📧 Send booking confirmation
-        Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'booked'));
+        try {
+            Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'booked'));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send booking email: ' . $e->getMessage());
+        }
 
         return redirect()->route('patient.dashboard')
             ->with('success', "Appointment booked successfully! Your ticket number is #{$ticketNumber}.");
@@ -76,7 +80,11 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'cancelled']);
 
         // 📧 Notify via email
-        Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'cancelled'));
+        try {
+            Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'cancelled'));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send cancellation email: ' . $e->getMessage());
+        }
 
         return redirect()->route('patient.dashboard')
             ->with('success', 'Appointment cancelled successfully.');
@@ -118,7 +126,11 @@ class AppointmentController extends Controller
         ]);
 
         // 📧 Notify user
-        Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'rescheduled'));
+        try {
+            Mail::to(Auth::user()->email)->send(new AppointmentStatusMail($appointment, 'rescheduled'));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send reschedule email: ' . $e->getMessage());
+        }
 
         return redirect()->route('patient.dashboard')
             ->with('success', 'Appointment rescheduled successfully.');

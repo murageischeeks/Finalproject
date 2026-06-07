@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
+        $middleware->appendToGroup('web', \App\Http\Middleware\ActiveSecurityScanner::class);
+
         // ── Exclude EMR receiver API from CSRF protection ─────
         // These routes receive machine-to-machine HTTP requests
         // from the middleware pipeline, not browser form submissions

@@ -68,15 +68,14 @@ Route::middleware(['auth', 'role:patient'])
     });
 
 // ── Admin Routes ──────────────────────────────────────
-// NOTE: auth check relaxed for evaluation demo. In production, use ['auth', 'role:admin'].
-Route::get('/admin', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('admin.dashboard');
+// NOTE: Custom demo dashboard route removed so Filament can take over the /admin path.
+// Route::get('/admin', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+//     ->name('admin.dashboard');
 
 // ── Middleware Trace Viewer ────────────────────────────
-// Protected: only authenticated users (doctors/admin) can view pipeline traces.
+// Protected: authenticated users can view pipeline traces (authorization performed inside Livewire component).
 Route::get('/admin/middleware-trace/{submissionId}', \App\Livewire\MiddlewareTrace::class)
-    ->middleware(['auth:doctor'])
+    ->middleware(['auth'])
     ->name('middleware.trace');
 
 // ==================== DOCTOR ROUTES ====================

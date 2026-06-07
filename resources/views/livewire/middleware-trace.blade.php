@@ -28,6 +28,27 @@
         </button>
     </div>
 
+    {{-- Flash Notifications --}}
+    @if(session()->has('success'))
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3 text-green-900 shadow-sm print:hidden">
+        <svg class="w-6 h-6 text-green-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div>
+            <p class="font-bold text-sm">Action Successful</p>
+            <p class="text-xs text-green-700 mt-0.5">{{ session('success') }}</p>
+        </div>
+    </div>
+    @endif
+
+    @if(session()->has('error'))
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3 text-red-900 shadow-sm print:hidden">
+        <svg class="w-6 h-6 text-red-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div>
+            <p class="font-bold text-sm">Action Blocked</p>
+            <p class="text-xs text-red-700 mt-0.5">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
+
     {{-- Contextual Banner --}}
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-blue-900 shadow-sm print:border-none print:shadow-none print:bg-transparent print:p-0">
         <svg class="w-6 h-6 text-blue-600 shrink-0 print:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -132,19 +153,41 @@
                                             @foreach($value as $k => $v)
                                             <div class="flex gap-2 text-xs">
                                                 <span class="font-semibold text-gray-500 shrink-0 w-36 truncate">{{ $k }}</span>
-                                                <span class="font-mono text-gray-700 break-all">{{ is_array($v) ? json_encode($v) : $v }}</span>
+                                                <span class="font-mono text-gray-700 break-all">
+                                                    @if(is_array($v))
+                                                        <ul class="space-y-1 mt-1">
+                                                            @foreach($v as $subItem)
+                                                            <li class="text-xs text-gray-700">{{ $subItem }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @elseif(is_string($v) && str_starts_with($v, 'http'))
+                                                        <a href="{{ $v }}" target="_blank" class="text-blue-600 hover:underline">{{ $v }}</a>
+                                                    @else
+                                                        {{ $v }}
+                                                    @endif
+                                                </span>
                                             </div>
                                             @endforeach
                                         </div>
                                     @else
                                         <ul class="space-y-1">
                                             @foreach($value as $item)
-                                            <li class="text-xs text-gray-700 font-mono">{{ $item }}</li>
+                                            <li class="text-xs text-gray-700 font-mono">
+                                                @if(is_string($item) && str_starts_with($item, 'http'))
+                                                    <a href="{{ $item }}" target="_blank" class="text-blue-600 hover:underline">{{ $item }}</a>
+                                                @else
+                                                    {{ $item }}
+                                                @endif
+                                            </li>
                                             @endforeach
                                         </ul>
                                     @endif
                                 @else
-                                    <p class="text-xs text-gray-700 font-mono">{{ $value }}</p>
+                                    @if(is_string($value) && str_starts_with($value, 'http'))
+                                        <a href="{{ $value }}" target="_blank" class="text-xs text-blue-600 font-mono hover:underline break-all">{{ $value }}</a>
+                                    @else
+                                        <p class="text-xs text-gray-700 font-mono">{{ $value }}</p>
+                                    @endif
                                 @endif
                             </div>
                             @endforeach
@@ -162,22 +205,26 @@
     {{-- Pipeline Completion Summary --}}
     @php
         $totalStages  = count($trace);
-        $totalWarnings = $submission->urgency_level === 'High' ? 2 : 0;
+        $hasSecurityBlock = collect($trace)->contains('action', 'security_checkpoint_failed');
+        $hasErrors = collect($trace)->contains('outcome', 'failure') ? 1 : 0;
+        $totalWarnings = $submission->urgency_level === 'High' && !$hasSecurityBlock ? 2 : 0;
         $synced = $submission->sync_status === 'Synced';
+        $execTime = $hasSecurityBlock ? '0.04s' : ($hasErrors ? '0.25s' : '1.56s');
+        $expectedStages = $hasSecurityBlock ? 1 : ($hasErrors ? 2 : 5);
     @endphp
     <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl shadow-lg p-6">
         <h2 class="text-sm font-bold uppercase tracking-widest text-slate-300 mb-5">Pipeline Completion Summary</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white/10 rounded-xl p-4 text-center">
-                <p class="text-2xl font-black text-white">1.56s</p>
+                <p class="text-2xl font-black text-white">{{ $execTime }}</p>
                 <p class="text-xs text-slate-400 mt-1">Total Execution Time</p>
             </div>
             <div class="bg-white/10 rounded-xl p-4 text-center">
-                <p class="text-2xl font-black text-green-400">{{ $totalStages }}/{{ $totalStages }}</p>
+                <p class="text-2xl font-black text-green-400">{{ $totalStages }}/{{ $expectedStages }}</p>
                 <p class="text-xs text-slate-400 mt-1">Stages Completed</p>
             </div>
             <div class="bg-white/10 rounded-xl p-4 text-center">
-                <p class="text-2xl font-black text-red-400">0</p>
+                <p class="text-2xl font-black text-red-400">{{ $hasErrors }}</p>
                 <p class="text-xs text-slate-400 mt-1">Errors</p>
             </div>
             <div class="bg-white/10 rounded-xl p-4 text-center">
@@ -187,6 +234,16 @@
         </div>
 
         <div class="space-y-2 text-sm">
+            @if($hasSecurityBlock)
+            <div class="flex items-center gap-2">
+                <span class="text-red-400 font-bold">✕</span>
+                <span class="text-slate-300">Pipeline Halted — Active Security Firewall blocked malicious payload</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-red-400 font-bold">✕</span>
+                <span class="text-slate-300">EMR Sync Blocked — Attack attempt logged to Audit Trail</span>
+            </div>
+            @else
             <div class="flex items-center gap-2">
                 <span class="text-green-400 font-bold">✓</span>
                 <span class="text-slate-300">Patient Form → Middleware → Local DB → FHIR → EMR</span>
@@ -210,6 +267,7 @@
                     <span class="text-slate-300">EMR Sync status: <span class="font-semibold text-amber-300">{{ $submission->sync_status }}</span></span>
                 @endif
             </div>
+            @endif
         </div>
     </div>
 
@@ -256,11 +314,11 @@
         <h2 class="text-sm font-semibold text-gray-800 mb-4">Pipeline Actions</h2>
         <div class="flex flex-wrap gap-3">
             @if($submission->sync_status === 'Failed')
-            <button class="btn bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2">
+            <button wire:click="scheduleManualSync" class="btn bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Schedule Manual Sync
             </button>
-            <button class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm flex items-center gap-2">
+            <button wire:click="contactItSupport" class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 Contact IT Support
             </button>

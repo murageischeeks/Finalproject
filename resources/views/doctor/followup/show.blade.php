@@ -26,7 +26,7 @@
                 @endif
             </div>
         </div>
-        <button x-data @click="$dispatch('open-pipeline-modal', { url: '{{ route('middleware.trace', $submission->id) }}' })" 
+        <button type="button" x-data @click.prevent="$dispatch('open-pipeline-modal', { url: '{{ route('middleware.trace', $submission->id) }}' })" 
                 class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-4 py-2 text-sm font-semibold rounded-xl shadow-sm transition whitespace-nowrap">
             View Full Pipeline Trace
         </button>

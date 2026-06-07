@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::connection('emr')->dropIfExists('emr_observations');
         Schema::connection('emr')->create('emr_observations', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();

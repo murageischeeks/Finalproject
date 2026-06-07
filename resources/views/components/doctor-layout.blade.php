@@ -22,6 +22,7 @@
                    class="hover:text-gray-200">Logout</a>
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
                     @csrf
+                    <input type="hidden" name="guard" value="doctor">
                 </form>
             </div>
         </div>
